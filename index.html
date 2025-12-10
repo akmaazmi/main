@@ -1076,6 +1076,34 @@ async function downloadMonthAsImage(year, month, teams) {
   // Wait for render
   await new Promise(resolve => setTimeout(resolve, 100));
 
+  // Apply min-height calculation for download image
+  const calendar = tempContainer.querySelector('.calendar');
+  if (calendar) {
+    const allDaycards = Array.from(calendar.querySelectorAll('.daycard'));
+    allDaycards.forEach(dc => { dc.style.minHeight = ''; });
+
+    const cols = 7;
+    const cells = Array.from(calendar.children);
+
+    for (let i = 0; i < cells.length; i += cols) {
+      const row = cells.slice(i, i + cols);
+      const rowDaycards = row.map(c => c.classList.contains('daycard') ? c : c.querySelector('.daycard')).filter(Boolean);
+      if (rowDaycards.length === 0) continue;
+
+      let maxH = 0;
+      rowDaycards.forEach(dc => {
+        const h = Math.ceil(dc.offsetHeight);
+        if (h > maxH) maxH = h;
+      });
+
+      const px = maxH + 'px';
+      rowDaycards.forEach(dc => { dc.style.minHeight = px; });
+    }
+  }
+
+  // Wait again after height adjustment
+  await new Promise(resolve => setTimeout(resolve, 100));
+
   try {
     const canvas = await html2canvas(tempContainer, {
       scale: 4,
