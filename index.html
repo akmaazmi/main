@@ -1134,6 +1134,9 @@ async function handleDownload() {
   downloadBtn.textContent = 'DOWNLOADING...';
 
   try {
+    // Detect iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
     for (let i = 0; i < months.length; i++) {
       const canvas = await downloadMonthAsImage(MIN_YEAR, months[i], teams);
       
@@ -1141,10 +1144,31 @@ async function handleDownload() {
       const monthNames = months.map(m => monthName(m).slice(0, 3).toUpperCase()).join('-');
       const fileName = `${teamNames}_${monthNames}_${MIN_YEAR}.png`;
       
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
+      if (isIOS && navigator.share) {
+        // Use Web Share API for iOS
+        canvas.toBlob(async (blob) => {
+          const file = new File([blob], fileName, { type: 'image/png' });
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Schedule Image',
+              text: `Schedule for ${monthNames} ${MIN_YEAR}`
+            });
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              // Fallback: open in new window
+              const newWindow = window.open();
+              newWindow.document.write(`<img src="${canvas.toDataURL()}" style="max-width:100%"/>`);
+            }
+          }
+        });
+      } else {
+        // Standard download for desktop/Android
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+      }
       
       if (i < months.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 500));
