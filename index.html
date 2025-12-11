@@ -509,8 +509,17 @@
   }
 
   .dropdown:not(.ready) {
-    opacity: 0;
-    pointer-events: none;
+    visibility: hidden; /* Ganti opacity dengan visibility */
+  }
+
+  .dropdown.ready {
+    visibility: visible;
+    animation: fadeIn 0.2s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   body.loading #calendarContainer {
