@@ -131,16 +131,16 @@
   }
 
   .dropdown__list {
-    position: fixed;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
     z-index: 1000;
     background: #fff;
     border: 1px solid #e5e7eb;
     border-radius: 0.75rem;
     padding: 0.5rem;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    max-height: 70vh;
     overflow-y: auto;
-    min-width: 200px;
   }
 
   .dropdown__item {
@@ -940,23 +940,9 @@
     }
   
     function refreshButton(){
-      const selected = Array.from(hidden.selectedOptions).map(o=>o.value);
       const labelEl = btn.querySelector('.dropdown__label');
-      if (selected.length === 0) {
-        labelEl.textContent = placeholder;
-        return;
-      }
-      if (selected.length === hidden.options.length) {
-        labelEl.textContent = allLabel;
-        return;
-      }
-      let labels;
-      if (hidden.id === 'monthSelect') {
-        labels = selected.map(v => monthName(Number(v)).slice(0,3).toUpperCase());
-      } else {
-        labels = selected.map(s => String(s).toUpperCase());
-      }
-      labelEl.textContent = labels.join(', ');
+      // always show default placeholder text, do not display specific selections
+      labelEl.textContent = placeholder;
     }
   
     btn.addEventListener('click', (e)=>{
@@ -966,10 +952,6 @@
 
       if (!visible) {
         list.style.display = 'block';
-        const btnRect = btn.getBoundingClientRect();
-        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-        list.style.top = (btnRect.bottom + scrollTop + 4) + 'px';
-        list.style.left = btnRect.left + 'px';
       } else {
         list.style.display = 'none';
       }
@@ -988,8 +970,8 @@
     refreshButton();
   }
   
-  initMultiDrop('teamSelect','teamDropdown','Teams','All Teams');
-  initMultiDrop('monthSelect','monthDropdown','Months','All Months');
+  initMultiDrop('teamSelect','teamDropdown','Select Teams');
+  initMultiDrop('monthSelect','monthDropdown','Select Months');
 
   /* ============================================
      INITIAL RENDER
