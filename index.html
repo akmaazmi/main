@@ -226,6 +226,7 @@
     color: #6b7280;
     border-right: 1px solid #e5e7eb;
     background-color: #bbdefb;
+    min-width: var(--calendar-min-width);
   }
 
   .weekday-header:last-child {
@@ -725,10 +726,10 @@
   function updateMonthDisplay() {
     const displayElement = document.getElementById('currentMonthDisplay');
     if (displayElement) {
-      displayElement.textContent = monthName(currentMonth);
+      displayElement.textContent = monthName(currentMonth) + ' ' + currentYear;
     }
   }
-
+  
   updateMonthDisplay();
 
   /* ============================================
@@ -986,40 +987,38 @@
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '0';
-    tempContainer.style.width = '1200px';
     tempContainer.style.background = '#ffffff';
     tempContainer.style.padding = '40px';
     tempContainer.style.fontFamily = 'Tahoma, sans-serif';
     document.body.appendChild(tempContainer);
 
+    // Header
     const header = document.createElement('div');
     header.style.marginBottom = '30px';
     header.style.textAlign = 'center';
     header.innerHTML = `<h1 style="margin: 0; font-size: 36px; font-weight: 700; color: #111827;">${monthName(month).toUpperCase()} ${year}</h1>`;
     tempContainer.appendChild(header);
 
-    const weekdayHeader = document.createElement('div');
-    weekdayHeader.style.cssText = 'display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 10px; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;';
-    weekdayHeader.innerHTML = `
-      <div style="padding: 12px; text-align: center; font-size: 14px; font-weight: 500; color: #6b7280;">SUN</div>
-      <div style="padding: 12px; text-align: center; font-size: 14px; font-weight: 500; color: #6b7280;">MON</div>
-      <div style="padding: 12px; text-align: center; font-size: 14px; font-weight: 500; color: #6b7280;">TUE</div>
-      <div style="padding: 12px; text-align: center; font-size: 14px; font-weight: 500; color: #6b7280;">WED</div>
-      <div style="padding: 12px; text-align: center; font-size: 14px; font-weight: 500; color: #6b7280;">THU</div>
-      <div style="padding: 12px; text-align: center; font-size: 14px; font-weight: 500; color: #6b7280;">FRI</div>
-      <div style="padding: 12px; text-align: center; font-size: 14px; font-weight: 500; color: #6b7280;">SAT</div>
-    `;
-    tempContainer.appendChild(weekdayHeader);
+    // Clone weekday headers dari website
+    const originalWeekdayHeaders = document.querySelector('.weekday-headers');
+    const weekdayHeaderClone = originalWeekdayHeaders.cloneNode(true);
+    
+    // Remove sticky position untuk download
+    weekdayHeaderClone.style.position = 'static';
+    weekdayHeaderClone.style.top = 'auto';
+    tempContainer.appendChild(weekdayHeaderClone);
 
+    // Render calendar grid with selected month
     const calendarGrid = document.createElement('div');
-    calendarGrid.style.cssText = 'display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;';
+    calendarGrid.className = 'calendar-grid';
     calendarGrid.innerHTML = renderMonthGrid(year, month, teams);
     tempContainer.appendChild(calendarGrid);
 
     await new Promise(resolve => setTimeout(resolve, 200));
 
-    // Calculate and apply min-width for downloaded image
+    // Calculate and apply min-width (sama seperti website)
     const days = calendarGrid.querySelectorAll('.calendar-day');
+    const weekdayHeaders = weekdayHeaderClone.querySelectorAll('.weekday-header');
     let maxDayWidth = 0;
     
     days.forEach(day => {
@@ -1029,10 +1028,21 @@
       }
     });
     
-    // Apply min-width to all calendar-day elements
+    // Apply min-width to calendar-day AND weekday-header
     days.forEach(day => {
       day.style.minWidth = maxDayWidth + 'px';
     });
+    
+    weekdayHeaders.forEach(header => {
+      header.style.minWidth = maxDayWidth + 'px';
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Calculate dynamic width
+    const totalGridWidth = maxDayWidth * 7;
+    const totalWidth = totalGridWidth + 80;
+    tempContainer.style.width = totalWidth + 'px';
 
     await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -1043,6 +1053,8 @@
         logging: false,
         useCORS: true,
         allowTaint: true,
+        width: totalWidth,
+        height: tempContainer.scrollHeight
       });
 
       return canvas;
@@ -1109,8 +1121,8 @@
         const canvas = await downloadMonthAsImage(MIN_YEAR, months[i], teams);
         
         const teamNames = teams.map(t => t.toUpperCase()).join('-');
-        const monthName_str = monthName(months[i]);
-        const fileName = `${teamNames}_${monthName_str}_${MIN_YEAR}.png`;
+        const monthShort = monthName(months[i]).slice(0, 3).toUpperCase();
+        const fileName = `${teamNames}_${monthShort}_${MIN_YEAR}.png`;
         
         const link = document.createElement('a');
         link.download = fileName;
