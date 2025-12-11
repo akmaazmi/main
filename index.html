@@ -16,13 +16,12 @@
     font-family: Tahoma, sans-serif;
     background-color: #ffffff;
     color: #111827;
-    -webkit-font-smoothing: antialiased;
+    overflow-y: scroll;
   }
 
   .container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
     padding: 1.5rem;
   }
 
@@ -33,6 +32,13 @@
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
+    position: sticky;
+    top: 0;
+    background-color: #ffffff;
+    z-index: 100;
+    padding-top: 1rem;
+    /* Add border to make header more visible */
+    border-bottom: 2px solid #e5e7eb;
   }
 
   .month-nav {
@@ -44,8 +50,9 @@
     margin-bottom: 1rem;
     /* allow horizontal scrolling only when needed */
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     width: 100%;
+    /* Prevent overflow from affecting parent */
+    overflow-y: visible;
   }
   
   .month-nav-left {
@@ -120,7 +127,6 @@
 
   main {
     flex-grow: 1;
-    overflow: auto;
   }
 
   .weekday-headers {
@@ -129,6 +135,10 @@
     gap: 1px;
     border-top: 1px solid #e5e7eb;
     border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: var(--header-height); /* Use CSS variable with fallback */
+    background-color: #ffffff;
+    z-index: 50;
   }
 
   .weekday-header {
@@ -591,6 +601,23 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
+  // Calculate and set header height for sticky positioning
+  function updateWeekdayHeadersPosition() {
+    const header = document.querySelector('header');
+    
+    if (header) {
+      const headerHeight = header.offsetHeight;
+      // Set CSS variable instead of directly setting style
+      document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
+    }
+  }
+
+  // Update on load
+  window.addEventListener('load', updateWeekdayHeadersPosition);
+  
+  // Update on resize
+  window.addEventListener('resize', updateWeekdayHeadersPosition);
+
   function fmtDate(d){
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
