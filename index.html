@@ -27,13 +27,6 @@
             padding: 1.5rem;
         }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 1.5rem;
-            font-size: 2rem;
-        }
-
         .navigation {
             display: flex;
             justify-content: space-between;
@@ -175,10 +168,6 @@
 
         /* Responsive design */
         @media (max-width: 48rem) {
-            h1 {
-                font-size: 1.5rem;
-            }
-
             .month-year {
                 font-size: 1.2rem;
             }
@@ -228,11 +217,6 @@
                 padding: 0.75rem;
             }
 
-            h1 {
-                font-size: 1.2rem;
-                margin-bottom: 1rem;
-            }
-
             .navigation {
                 flex-direction: column;
                 gap: 0.5rem;
@@ -251,8 +235,6 @@
 </head>
 <body>
     <div class="container">
-        <h1>SHIFT SCHEDULE 2026</h1>
-        
         <div class="navigation">
             <button class="nav-button" id="prevBtn" onclick="changeMonth(-1)">Prev</button>
             <div class="month-year" id="monthYear"></div>
@@ -430,6 +412,14 @@
                             shiftTime.className = 'shift-time';
                             shiftTime.textContent = shift === 'off' ? 'Off Day' : shift === 'rest' ? 'Rest Day' : shift;
                             teamDiv.appendChild(shiftTime);
+
+                            const dayInCycle = schedule[team].dayInCycle;
+                            if (shift !== 'off' && shift !== 'rest') {
+                                const kerjaInfo = document.createElement('span');
+                                kerjaInfo.className = 'shift-time';
+                                kerjaInfo.textContent = `Day ${dayInCycle}`;
+                                teamDiv.appendChild(kerjaInfo);
+                            }
                             
                             cell.appendChild(teamDiv);
                         }
