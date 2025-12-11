@@ -500,9 +500,30 @@
     stroke: currentColor;
     fill: none;
   }
+
+  /* Tambah inline style untuk hide elements sehingga ready */
+  /* Prevent flash on load */
+  .calendar-grid:empty {
+    min-height: 400px;
+    background: linear-gradient(to bottom, #f9fafb, #ffffff);
+  }
+
+  .dropdown:not(.ready) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body.loading #calendarContainer {
+    opacity: 0;
+  }
+
+  body.loaded #calendarContainer {
+    opacity: 1;
+    transition: opacity 0.2s ease-in;
+  }
 </style>
 </head>
-<body>
+<body class="loading">
 <div class="container">
   <header>
     <!-- Month navigation with filters on the right -->
@@ -596,6 +617,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
+// Wrap all initialization in DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
   function fmtDate(d){
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
@@ -928,12 +951,22 @@
   
     buildList();
     refreshButton();
+    
+    // Mark dropdown as ready
+    wrap.classList.add('ready');
   }
   
   initMultiDrop('teamSelect','teamDropdown','Teams','All Teams');
   initMultiDrop('monthSelect','monthDropdown','Months','All Months');
 
+  // Render and remove loading state
   renderSelectedMonths();
+  
+  // Remove loading class after render
+  requestAnimationFrame(() => {
+    document.body.classList.remove('loading');
+    document.body.classList.add('loaded');
+  });
 
   async function downloadMonthAsImage(year, month, teams) {
     const tempContainer = document.createElement('div');
@@ -1077,6 +1110,7 @@
       closeDownloadModal();
     }
   });
+});
 </script>
 </body>
 </html>
