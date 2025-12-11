@@ -1018,6 +1018,24 @@
 
     await new Promise(resolve => setTimeout(resolve, 200));
 
+    // Calculate and apply min-width for downloaded image
+    const days = calendarGrid.querySelectorAll('.calendar-day');
+    let maxDayWidth = 0;
+    
+    days.forEach(day => {
+      const dayWidth = day.scrollWidth;
+      if (dayWidth > maxDayWidth) {
+        maxDayWidth = dayWidth;
+      }
+    });
+    
+    // Apply min-width to all calendar-day elements
+    days.forEach(day => {
+      day.style.minWidth = maxDayWidth + 'px';
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
       const canvas = await html2canvas(tempContainer, {
         scale: 2,
