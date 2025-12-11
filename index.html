@@ -5,6 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SHIFT SCHEDULE 2026</title>
     <style>
+        :root { --header-height: 64px; }
+
+        /* make header sticky */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: white; /* so it covers content when sticky */
+            display: flex;
+            align-items: center; /* center all children on y-axis */
+            box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.05);
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 1rem 0;
+        }
+
+        /* keep calendar columns aligned and weekday header sticky below .header */
+        .calendar {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed; /* ensures fixed column widths so header aligns with body */
+        }
+
+        .calendar thead th {
+            position: sticky;
+            top: calc(var(--header-height)); /* offset by header height */
+            z-index: 35;
+            background: #667eea; /* keep original header background */
+            color: white;
+        }
+        /* ensure equal column widths */
+        .calendar th, .calendar td { width: calc(100% / 7); }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,6 +50,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 1rem;
+            overflow-y: scroll;
         }
 
         .container {
@@ -24,19 +59,84 @@
             background: white;
             border-radius: 1rem;
             box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.3);
-            padding: 1.5rem;
+            padding: 0 1.5rem 1.5rem 1.5rem;
         }
 
         .navigation {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
             gap: 1rem;
         }
 
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            height: 100%; /* let the filters fill header height for proper centering */
+        }
+        /* Dropdown filter styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-button {
+            padding: 0.45rem 0.6rem;
+            border-radius: 0.4rem;
+            border: 1px solid #ccc;
+            background: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+            border-radius: 0.4rem;
+            padding: 0.25rem;
+            margin-top: 0.4rem;
+            display: none;
+            z-index: 20;
+            min-width: 9rem;
+            overflow: auto;
+        }
+        .dropdown.open .dropdown-menu { display: block; }
+        .dropdown-item {
+            padding: 0.4rem 0.6rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            border-radius: 0.25rem;
+        }
+        .dropdown-item:hover { background: #f1f5f9; }
+        /* tick as square box on the left */
+        .dropdown-item .tick {
+            width: 1.25rem;
+            height: 1.25rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: transparent; /* hide check when not selected */
+            margin-right: 0.8rem;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+        .dropdown-item.selected .tick {
+            background: #2b6cb0;
+            border-color: #2b6cb0;
+            color: #fff; /* show check in white when selected */
+        }
+
         .nav-button {
-            padding: 0.75rem 1.5rem;
+            padding: 0.45rem 0.6rem;
             background: #667eea;
             color: white;
             border: none;
@@ -67,7 +167,6 @@
         .calendar {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 1.5rem;
         }
 
         .calendar th {
@@ -92,6 +191,7 @@
             font-size: 1.1rem;
             margin-bottom: 0.5rem;
             color: #333;
+            text-align: center;
         }
 
         .team-schedule {
@@ -99,7 +199,6 @@
             padding: 0.3rem;
             border-radius: 0.25rem;
             font-size: 0.75rem;
-            text-align: center;
         }
 
         .team-name {
@@ -134,36 +233,12 @@
         }
 
         .shift-rest {
-            background: #cbd5e0;
+            background: #e2e8f0;
             color: #4a5568;
         }
 
         .empty-day {
             background: #f7fafc;
-        }
-
-        .legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1.5rem;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .legend-color {
-            width: 2rem;
-            height: 1.5rem;
-            border-radius: 0.25rem;
-        }
-
-        .legend-label {
-            font-size: 0.9rem;
         }
 
         /* Responsive design */
@@ -201,15 +276,6 @@
             .shift-time {
                 font-size: 0.6rem;
             }
-
-            .legend {
-                font-size: 0.8rem;
-            }
-
-            .legend-color {
-                width: 1.5rem;
-                height: 1rem;
-            }
         }
 
         @media (max-width: 30rem) {
@@ -235,36 +301,27 @@
 </head>
 <body>
     <div class="container">
-        <div class="navigation">
-            <button class="nav-button" id="prevBtn" onclick="changeMonth(-1)">Prev</button>
-            <div class="month-year" id="monthYear"></div>
-            <button class="nav-button" id="nextBtn" onclick="changeMonth(1)">Next</button>
+        <div class="header">
+            <div class="navigation">
+                <button class="nav-button" id="prevBtn" onclick="changeMonth(-1)"></button>
+                <div class="month-year" id="monthYear"></div>
+                <button class="nav-button" id="nextBtn" onclick="changeMonth(1)"></button>
+            </div>
+            <div class="filters">
+                <div class="dropdown" id="teamDropdown">
+                    <button class="dropdown-button" id="teamDropdownBtn">Select Teams</button>
+                    <div class="dropdown-menu" id="teamDropdownMenu"></div>
+                </div>
+
+                <div class="dropdown" id="monthDropdown">
+                    <button class="dropdown-button" id="monthDropdownBtn">Select Months</button>
+                    <div class="dropdown-menu" id="monthDropdownMenu"></div>
+                </div>
+            </div>
         </div>
 
         <table class="calendar" id="calendar"></table>
 
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color shift-0000-0800"></div>
-                <span class="legend-label">0000-0800 (Night/Early Morning)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color shift-0800-1600"></div>
-                <span class="legend-label">0800-1600 (Day)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color shift-1600-0000"></div>
-                <span class="legend-label">1600-0000 (Evening/Night)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color shift-off"></div>
-                <span class="legend-label">Off Day</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color shift-rest"></div>
-                <span class="legend-label">Rest Day</span>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -274,6 +331,21 @@
         // Shift types
         const shifts = ['0800-1600', '0000-0800', '1600-0000'];
         
+        // Friendly names for shifts
+        const shiftNames = {
+            '0000-0800': 'Night',
+            '0800-1600': 'Morning',
+            '1600-0000': 'Evening'
+        };
+        
+        // Current month/year (declare before using in selectedMonths)
+        let currentMonth = 0; // January 2026
+        let currentYear = 2026;
+        
+        // Selected filters (default: all teams, all months)
+        let selectedTeams = [...teams];
+        let selectedMonths = Array.from({ length: 12 }, (_, i) => i); // select all months by default
+
         // Initial state for January 1, 2026
         const initialState = {
             'SITI': { shift: '1600-0000', dayInCycle: 5 },
@@ -281,10 +353,7 @@
             'EKIN': { shift: '0800-1600', dayInCycle: 3 },
             'BALQIS': { shift: '0000-0800', dayInCycle: 1 }
         };
-
-        let currentMonth = 0; // January 2026
-        let currentYear = 2026;
-
+        
         // Calculate schedule for a specific date
         function getScheduleForDate(date) {
             const jan1_2026 = new Date(2026, 0, 1);
@@ -309,18 +378,12 @@
                     
                     // For each team, calculate their shift based on rotation
                     if (team === 'SITI') {
-                        // SITI starts on 1600-0000 on Jan 1 (day 5)
-                        // After day 6, goes to off/rest (7,8)
-                        // Then starts new cycle with next shift in rotation
                         const workCyclesPassed = Math.floor((daysDiff + initial.dayInCycle - 1) / 8);
                         const shiftIndex = (2 + workCyclesPassed) % 3; // Starts at index 2 (1600-0000)
                         currentShift = shifts[shiftIndex];
                     } else if (team === 'IRA') {
-                        // IRA starts on off day on Jan 1 (day 7)
-                        // On Jan 3 starts 1600-0000 (day 1)
                         const adjustedDays = daysDiff - 2; // Jan 3 is day 0 for IRA's first work cycle
                         if (adjustedDays < 0) {
-                            // Still in initial off/rest period
                             if (dayInCycle === 7) currentShift = 'off';
                             else if (dayInCycle === 8) currentShift = 'rest';
                         } else {
@@ -329,12 +392,10 @@
                             currentShift = shifts[shiftIndex];
                         }
                     } else if (team === 'EKIN') {
-                        // EKIN starts on 0800-1600 on Jan 1 (day 3)
                         const workCyclesPassed = Math.floor((daysDiff + initial.dayInCycle - 1) / 8);
                         const shiftIndex = (0 + workCyclesPassed) % 3; // Starts at index 0 (0800-1600)
                         currentShift = shifts[shiftIndex];
                     } else if (team === 'BALQIS') {
-                        // BALQIS starts on 0000-0800 on Jan 1 (day 1)
                         const workCyclesPassed = Math.floor((daysDiff + initial.dayInCycle - 1) / 8);
                         const shiftIndex = (1 + workCyclesPassed) % 3; // Starts at index 1 (0000-0800)
                         currentShift = shifts[shiftIndex];
@@ -347,41 +408,65 @@
             return schedule;
         }
 
+        // update CSS var for header height so weekday header sticks correctly
+        function updateHeaderHeight() {
+            const hdr = document.querySelector('.header');
+            const h = hdr ? Math.ceil(hdr.getBoundingClientRect().height) : 0;
+            document.documentElement.style.setProperty('--header-height', `${h}px`);
+        }
+        // call on resize/initial
+        window.addEventListener('resize', updateHeaderHeight);
+        window.addEventListener('load', updateHeaderHeight);
+
         // Generate calendar for the current month
         function generateCalendar() {
             const calendar = document.getElementById('calendar');
             const monthYear = document.getElementById('monthYear');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            // treat empty selection as "select all" for rendering
+            const teamsToShow = selectedTeams.length ? selectedTeams : [...teams];
+            const monthsToShow = selectedMonths.length ? selectedMonths : Array.from({ length: 12 }, (_, i) => i);
             
             const date = new Date(currentYear, currentMonth, 1);
             const monthName = date.toLocaleString('en-US', { month: 'long' });
             monthYear.textContent = `${monthName} ${currentYear}`;
             
-            // Clear calendar
-            calendar.innerHTML = '';
+            // Helper to get month name for given year/month
+            function getMonthName(y, m) {
+                return new Date(y, m, 1).toLocaleString('en-US', { month: 'long' });
+            }
+
+            // Determine labels for prev/next buttons (looping months)
+            const prevIndex = (currentMonth - 1 + 12) % 12;
+            const nextIndex = (currentMonth + 1) % 12;
+            prevBtn.textContent = getMonthName(currentYear, prevIndex);
+            nextBtn.textContent = getMonthName(currentYear, nextIndex);
             
-            // Add header row
-            const headerRow = calendar.insertRow();
+            // Build table with thead/tbody so weekday header can be sticky
+            calendar.innerHTML = '';
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
             const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             for (const day of daysOfWeek) {
                 const th = document.createElement('th');
                 th.textContent = day;
                 headerRow.appendChild(th);
             }
-            
-            // Get first day of month and number of days
+            thead.appendChild(headerRow);
+            calendar.appendChild(thead);
+
             const firstDay = new Date(currentYear, currentMonth, 1).getDay();
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            
-            // Generate calendar grid
+            const tbody = document.createElement('tbody');
+
             let dayCount = 1;
             let rowCount = Math.ceil((firstDay + daysInMonth) / 7);
-            
             for (let i = 0; i < rowCount; i++) {
-                const row = calendar.insertRow();
-                
+                const row = document.createElement('tr');
                 for (let j = 0; j < 7; j++) {
-                    const cell = row.insertCell();
-                    
+                    const cell = document.createElement('td');
                     if (i === 0 && j < firstDay) {
                         cell.classList.add('empty-day');
                     } else if (dayCount > daysInMonth) {
@@ -389,30 +474,28 @@
                     } else {
                         const currentDate = new Date(currentYear, currentMonth, dayCount);
                         const schedule = getScheduleForDate(currentDate);
-                        
                         const dayNumber = document.createElement('div');
                         dayNumber.className = 'day-number';
                         dayNumber.textContent = dayCount;
                         cell.appendChild(dayNumber);
-                        
-                        // Add each team's schedule
-                        for (const team of teams) {
+
+                        for (const team of teamsToShow) {
                             const teamDiv = document.createElement('div');
                             teamDiv.className = 'team-schedule';
-                            
                             const shift = schedule[team].shift;
                             teamDiv.classList.add(`shift-${shift.replace(':', '')}`);
-                            
                             const teamName = document.createElement('span');
                             teamName.className = 'team-name';
                             teamName.textContent = team;
                             teamDiv.appendChild(teamName);
-                            
                             const shiftTime = document.createElement('span');
                             shiftTime.className = 'shift-time';
-                            shiftTime.textContent = shift === 'off' ? 'Off Day' : shift === 'rest' ? 'Rest Day' : shift;
+                            shiftTime.textContent = shift === 'off'
+                                ? 'Off Day'
+                                : shift === 'rest'
+                                ? 'Rest Day'
+                                : (shiftNames[shift] || shift);
                             teamDiv.appendChild(shiftTime);
-
                             const dayInCycle = schedule[team].dayInCycle;
                             if (shift !== 'off' && shift !== 'rest') {
                                 const kerjaInfo = document.createElement('span');
@@ -420,46 +503,157 @@
                                 kerjaInfo.textContent = `Day ${dayInCycle}`;
                                 teamDiv.appendChild(kerjaInfo);
                             }
-                            
                             cell.appendChild(teamDiv);
                         }
-                        
                         dayCount++;
                     }
+                    row.appendChild(cell);
                 }
+                tbody.appendChild(row);
             }
-            
-            // Update button states
-            document.getElementById('prevBtn').disabled = (currentMonth === 0 && currentYear === 2026);
-            document.getElementById('nextBtn').disabled = (currentMonth === 11 && currentYear === 2026);
-        }
+            calendar.appendChild(tbody);
 
+            // update header height after DOM changes (weekday sticky top depends on it)
+            setTimeout(updateHeaderHeight, 0);
+            
+             // Buttons always enabled (months loop)
+             prevBtn.disabled = false;
+             nextBtn.disabled = false;
+         }
+ 
         // Change month
         function changeMonth(direction) {
-            currentMonth += direction;
-            
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            } else if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
-            }
-            
-            // Restrict to 2026 only
-            if (currentYear < 2026) {
-                currentYear = 2026;
-                currentMonth = 0;
-            } else if (currentYear > 2026) {
-                currentYear = 2026;
-                currentMonth = 11;
-            }
-            
+            // Loop months within the year (e.g., Jan prev -> Dec)
+            currentMonth = (currentMonth + 12 + direction) % 12;
+            // keep currentYear fixed (2026)
             generateCalendar();
         }
 
-        // Initialize calendar
+        function populateFilters() {
+            const teamMenu = document.getElementById('teamDropdownMenu');
+            const monthMenu = document.getElementById('monthDropdownMenu');
+            const teamBtn = document.getElementById('teamDropdownBtn');
+            const monthBtn = document.getElementById('monthDropdownBtn');
+
+            // Populate teams menu
+            teamMenu.innerHTML = '';
+
+            // "Select All" for teams (toggle: select all / clear all)
+            const teamAll = document.createElement('div');
+            teamAll.className = 'dropdown-item' + (selectedTeams.length === teams.length ? ' selected' : '');
+            teamAll.dataset.value = '__select_all_teams';
+            teamAll.innerHTML = `<span class="tick">✓</span><span>Select All</span>`;
+            teamAll.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (selectedTeams.length === teams.length) {
+                    // currently all selected -> clear selection
+                    selectedTeams = [];
+                } else {
+                    // select all
+                    selectedTeams = [...teams];
+                }
+                // do NOT auto-convert empty -> all; allow empty selection
+                populateFilters();
+                generateCalendar();
+            });
+            teamMenu.appendChild(teamAll);
+
+            for (const t of teams) {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item' + (selectedTeams.includes(t) ? ' selected' : '');
+                item.dataset.value = t;
+                item.innerHTML = `<span class="tick">✓</span><span>${t}</span>`;
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = selectedTeams.indexOf(t);
+                    if (idx === -1) selectedTeams.push(t);
+                    else selectedTeams.splice(idx, 1);
+                    // allow empty selection (do not force select-all)
+                    populateFilters(); // refresh UI
+                    generateCalendar();
+                });
+                teamMenu.appendChild(item);
+            }
+
+            // Populate months menu
+            monthMenu.innerHTML = '';
+
+            // "Select All" for months (toggle: select all / clear all)
+            const monthsAll = document.createElement('div');
+            monthsAll.className = 'dropdown-item' + (selectedMonths.length === 12 ? ' selected' : '');
+            monthsAll.dataset.value = '__select_all_months';
+            monthsAll.innerHTML = `<span class="tick">✓</span><span>Select All</span>`;
+            monthsAll.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (selectedMonths.length === 12) {
+                    // clear all months
+                    selectedMonths = [];
+                } else {
+                    // select all months
+                    selectedMonths = Array.from({length:12}, (_,i) => i);
+                }
+                // update visible month only if there is at least one selected
+                if (selectedMonths.length > 0) currentMonth = selectedMonths[0];
+                populateFilters();
+                generateCalendar();
+            });
+            monthMenu.appendChild(monthsAll);
+
+            for (let m = 0; m < 12; m++) {
+                const name = new Date(2026, m, 1).toLocaleString('en-US', { month: 'long' });
+                const item = document.createElement('div');
+                const selected = selectedMonths.includes(m);
+                item.className = 'dropdown-item' + (selected ? ' selected' : '');
+                item.dataset.value = String(m);
+                item.innerHTML = `<span class="tick">✓</span><span>${name}</span>`;
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const i = selectedMonths.indexOf(m);
+                    if (i === -1) selectedMonths.push(m);
+                    else selectedMonths.splice(i, 1);
+                    // if no months selected, leave selectedMonths empty (do not force select-all)
+                    if (selectedMonths.length > 0) {
+                        currentMonth = selectedMonths[0];
+                    }
+                    populateFilters();
+                    generateCalendar();
+                });
+                monthMenu.appendChild(item);
+            }
+            
+            // Keep clicks inside menus from closing dropdown (close only on outside click)
+            teamMenu.addEventListener('click', e => e.stopPropagation());
+            monthMenu.addEventListener('click', e => e.stopPropagation());
+
+            // Button open/close handlers
+            const teamDropdown = document.getElementById('teamDropdown');
+            const monthDropdown = document.getElementById('monthDropdown');
+            teamBtn.onclick = (e) => {
+                e.stopPropagation();
+                const opened = teamDropdown.classList.toggle('open');
+                if (opened) monthDropdown.classList.remove('open');
+                // header height might change (dropdown expands) -> update
+                setTimeout(updateHeaderHeight, 0);
+            };
+            monthBtn.onclick = (e) => {
+                e.stopPropagation();
+                const opened = monthDropdown.classList.toggle('open');
+                if (opened) teamDropdown.classList.remove('open');
+                setTimeout(updateHeaderHeight, 0);
+            };
+        }
+
+        // close dropdowns when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
+            setTimeout(updateHeaderHeight, 0);
+        });
+
+        // Initialize filters + calendar
+        populateFilters();
         generateCalendar();
-    </script>
-</body>
-</html>
+        // initial header height calc
+        setTimeout(updateHeaderHeight, 0);
+     </script>
+ </body>
+ </html>
