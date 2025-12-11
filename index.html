@@ -419,65 +419,88 @@
         window.addEventListener('load', updateHeaderHeight);
 
         // Generate calendar for the current month
-        function generateCalendar() {
-            const calendar = document.getElementById('calendar');
-            const monthYear = document.getElementById('monthYear');
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            
+        function getVisibleMonths() {
+            const months = selectedMonths.length ? selectedMonths.slice() : Array.from({ length: 12 }, (_, i) => i);
+            months.sort((a, b) => a - b);
+            return months;
+        }
+         function generateCalendar() {
+             const calendar = document.getElementById('calendar');
+             const monthYear = document.getElementById('monthYear');
+             const prevBtn = document.getElementById('prevBtn');
+             const nextBtn = document.getElementById('nextBtn');
+             
             // treat empty selection as "select all" for rendering
             const teamsToShow = selectedTeams.length ? selectedTeams : [...teams];
-            const monthsToShow = selectedMonths.length ? selectedMonths : Array.from({ length: 12 }, (_, i) => i);
-            
-            const date = new Date(currentYear, currentMonth, 1);
-            const monthName = date.toLocaleString('en-US', { month: 'long' });
-            monthYear.textContent = `${monthName} ${currentYear}`;
-            
-            // Helper to get month name for given year/month
-            function getMonthName(y, m) {
-                return new Date(y, m, 1).toLocaleString('en-US', { month: 'long' });
+            const monthsToShow = getVisibleMonths();
+
+            // if no months selected, show nothing and disable nav
+            if (monthsToShow.length === 0) {
+                calendar.innerHTML = '';
+                monthYear.textContent = 'No month selected';
+                prevBtn.textContent = '';
+                nextBtn.textContent = '';
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                return;
             }
 
-            // Determine labels for prev/next buttons (looping months)
-            const prevIndex = (currentMonth - 1 + 12) % 12;
-            const nextIndex = (currentMonth + 1) % 12;
-            prevBtn.textContent = getMonthName(currentYear, prevIndex);
-            nextBtn.textContent = getMonthName(currentYear, nextIndex);
-            
-            // Build table with thead/tbody so weekday header can be sticky
-            calendar.innerHTML = '';
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
-            const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            for (const day of daysOfWeek) {
-                const th = document.createElement('th');
-                th.textContent = day;
-                headerRow.appendChild(th);
-            }
-            thead.appendChild(headerRow);
-            calendar.appendChild(thead);
+            // ensure currentMonth is within visible months
+            if (!monthsToShow.includes(currentMonth)) currentMonth = monthsToShow[0];
+             
+             const date = new Date(currentYear, currentMonth, 1);
+             const monthName = date.toLocaleString('en-US', { month: 'long' });
+             monthYear.textContent = `${monthName} ${currentYear}`;
+             
+             // Helper to get month name for given year/month
+             function getMonthName(y, m) {
+                 return new Date(y, m, 1).toLocaleString('en-US', { month: 'long' });
+             }
+ 
 
-            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            const tbody = document.createElement('tbody');
+            // Determine labels for prev/next buttons (looping within selected months)
+            const idx = monthsToShow.indexOf(currentMonth);
+            const prevIndex = (idx - 1 + monthsToShow.length) % monthsToShow.length;
+            const nextIndex = (idx + 1) % monthsToShow.length;
+            prevBtn.textContent = getMonthName(currentYear, monthsToShow[prevIndex]);
+            nextBtn.textContent = getMonthName(currentYear, monthsToShow[nextIndex]);
+            prevBtn.disabled = monthsToShow.length <= 1;
+            nextBtn.disabled = monthsToShow.length <= 1;
+ 
+             // Build table with thead/tbody so weekday header can be sticky
+             calendar.innerHTML = '';
+             const thead = document.createElement('thead');
+             const headerRow = document.createElement('tr');
+             const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+             for (const day of daysOfWeek) {
+                 const th = document.createElement('th');
+                 th.textContent = day;
+                 headerRow.appendChild(th);
+             }
+             thead.appendChild(headerRow);
+             calendar.appendChild(thead);
 
-            let dayCount = 1;
-            let rowCount = Math.ceil((firstDay + daysInMonth) / 7);
-            for (let i = 0; i < rowCount; i++) {
-                const row = document.createElement('tr');
-                for (let j = 0; j < 7; j++) {
-                    const cell = document.createElement('td');
-                    if (i === 0 && j < firstDay) {
-                        cell.classList.add('empty-day');
-                    } else if (dayCount > daysInMonth) {
-                        cell.classList.add('empty-day');
-                    } else {
-                        const currentDate = new Date(currentYear, currentMonth, dayCount);
-                        const schedule = getScheduleForDate(currentDate);
-                        const dayNumber = document.createElement('div');
-                        dayNumber.className = 'day-number';
-                        dayNumber.textContent = dayCount;
-                        cell.appendChild(dayNumber);
+             const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+             const tbody = document.createElement('tbody');
+
+             let dayCount = 1;
+             let rowCount = Math.ceil((firstDay + daysInMonth) / 7);
+             for (let i = 0; i < rowCount; i++) {
+                 const row = document.createElement('tr');
+                 for (let j = 0; j < 7; j++) {
+                     const cell = document.createElement('td');
+                     if (i === 0 && j < firstDay) {
+                         cell.classList.add('empty-day');
+                     } else if (dayCount > daysInMonth) {
+                         cell.classList.add('empty-day');
+                     } else {
+                         const currentDate = new Date(currentYear, currentMonth, dayCount);
+                         const schedule = getScheduleForDate(currentDate);
+                         const dayNumber = document.createElement('div');
+                         dayNumber.className = 'day-number';
+                         dayNumber.textContent = dayCount;
+                         cell.appendChild(dayNumber);
 
                         for (const team of teamsToShow) {
                             const teamDiv = document.createElement('div');
@@ -506,12 +529,12 @@
                             cell.appendChild(teamDiv);
                         }
                         dayCount++;
-                    }
-                    row.appendChild(cell);
-                }
-                tbody.appendChild(row);
-            }
-            calendar.appendChild(tbody);
+                     }
+                     row.appendChild(cell);
+                 }
+                 tbody.appendChild(row);
+             }
+             calendar.appendChild(tbody);
 
             // update header height after DOM changes (weekday sticky top depends on it)
             setTimeout(updateHeaderHeight, 0);
@@ -521,11 +544,18 @@
              nextBtn.disabled = false;
          }
  
-        // Change month
+        // Change month (move within visible/selected months)
         function changeMonth(direction) {
-            // Loop months within the year (e.g., Jan prev -> Dec)
-            currentMonth = (currentMonth + 12 + direction) % 12;
-            // keep currentYear fixed (2026)
+            const months = getVisibleMonths();
+            if (months.length === 0) return;
+            let idx = months.indexOf(currentMonth);
+            if (idx === -1) {
+                currentMonth = months[0];
+                generateCalendar();
+                return;
+            }
+            const newIdx = (idx + direction + months.length) % months.length;
+            currentMonth = months[newIdx];
             generateCalendar();
         }
 
