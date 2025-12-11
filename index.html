@@ -322,11 +322,8 @@
                 } else if (dayInCycle === 8) {
                     schedule[team] = { shift: 'rest', dayInCycle: 8 };
                 } else {
-                    // Determine which shift
+                    // Determine which shift based on rotation
                     let currentShift;
-                    
-                    // Calculate how many complete 6-day work cycles have passed
-                    const totalWorkDays = daysDiff + (initial.dayInCycle <= 6 ? initial.dayInCycle - 1 : 0);
                     
                     // For each team, calculate their shift based on rotation
                     if (team === 'SITI') {
