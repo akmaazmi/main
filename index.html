@@ -1124,10 +1124,42 @@
         const monthShort = monthName(months[i]).slice(0, 3).toUpperCase();
         const fileName = `${teamNames}_${monthShort}_${MIN_YEAR}.png`;
         
-        const link = document.createElement('a');
-        link.download = fileName;
-        link.href = canvas.toDataURL('image/png', 1.0);
-        link.click();
+        // Prefer Web Share API with files (iOS 14+ / supported browsers)
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+        try {
+          if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] })) {
+            const file = new File([blob], fileName, { type: 'image/png' });
+            await navigator.share({ files: [file], title: fileName });
+          } else {
+            // Fallback: open image in new tab/window so user can long-press to save on iOS
+            const blobUrl = URL.createObjectURL(blob);
+            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isiOS) {
+              const w = window.open();
+              if (w) {
+                w.document.write(`<img src="${blobUrl}" style="max-width:100%;height:auto;display:block;margin:0">`);
+              } else {
+                // last resort: navigate (may be blocked in some contexts)
+                window.location.href = blobUrl;
+              }
+              // keep blobUrl alive — revocation after some delay
+              setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+            } else {
+              const link = document.createElement('a');
+              link.href = blobUrl;
+              link.download = fileName;
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+              URL.revokeObjectURL(blobUrl);
+            }
+          }
+        } catch (err) {
+          // fallback to opening data URL if everything else fails
+          const fallbackDataUrl = canvas.toDataURL('image/png', 1.0);
+          const w = window.open();
+          if (w) w.document.write(`<img src="${fallbackDataUrl}" style="max-width:100%;height:auto;display:block;margin:0">`);
+        }
         
         if (i < months.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 500));
