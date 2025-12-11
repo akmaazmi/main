@@ -46,20 +46,15 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     width: 100%;
-    /* BUANG padding kerana ia menghalang scroll di tepi kiri */
   }
   
   .month-nav-left {
-    /* center the prev / month / next horizontally but allow full content width */
+    /* center the prev / month / next horizontally */
     display: flex;
     align-items: center;
     gap: 1rem;
     justify-content: center;
-    /* TAMBAH min-width supaya boleh scroll sepenuhnya */
-    min-width: min-content;
     width: 100%;
-    /* TAMBAH padding DI SINI supaya content ada ruang tapi scroll berfungsi */
-    padding: 0 1rem;
   }
   
   .nav-button {
@@ -500,193 +495,9 @@
     stroke: currentColor;
     fill: none;
   }
-
-  /* Tambah inline style untuk hide elements sehingga ready */
-  /* Prevent flash on load */
-  .calendar-grid:empty {
-    min-height: 400px;
-    background: linear-gradient(to bottom, #f9fafb, #ffffff);
-  }
-
-  .dropdown:not(.ready) {
-    visibility: hidden; /* Ganti opacity dengan visibility */
-  }
-
-  .dropdown.ready {
-    visibility: visible;
-    animation: fadeIn 0.2s ease-in;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  body.loading #calendarContainer {
-    opacity: 0;
-  }
-
-  body.loaded #calendarContainer {
-    opacity: 1;
-    transition: opacity 0.2s ease-in;
-  }
-
-  /* === MOBILE RESPONSIVE === */
-  @media (max-width: 768px) {
-    .container {
-      padding: 0.75rem;
-    }
-
-    /* Smaller title */
-    .month-title {
-      font-size: 1.5rem;
-    }
-
-    /* Compact nav buttons */
-    .nav-button {
-      padding: 0.375rem 0.75rem;
-      font-size: 0.875rem;
-    }
-
-    .nav-button .icon-svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    /* Stack filters vertically on very small screens */
-    .filters {
-      flex-wrap: wrap;
-    }
-
-    /* Smaller dropdown buttons */
-    .dropdown__button {
-      padding: 0.375rem 0.75rem;
-      font-size: 0.875rem;
-    }
-
-    .dropdown__button .icon-svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    /* Smaller download button */
-    .download-button {
-      padding: 0.375rem 0.75rem;
-      font-size: 0.875rem;
-    }
-
-    .download-button .icon-svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    /* Compact weekday headers */
-    .weekday-header {
-      padding: 0.5rem 0.25rem;
-      font-size: 0.75rem;
-    }
-
-    /* Smaller calendar cells */
-    .calendar-day {
-      min-height: 100px;
-      padding: 0.5rem 0.25rem;
-    }
-
-    .day-number {
-      font-size: 0.875rem;
-      margin-bottom: 0.25rem;
-    }
-
-    /* Compact shift items */
-    .shift-item {
-      padding: 0.125rem 0.25rem;
-      margin-top: 0.125rem;
-      border-left-width: 3px;
-    }
-
-    .shift-person {
-      font-size: 0.625rem;
-    }
-
-    .shift-type {
-      font-size: 0.625rem;
-    }
-
-    .shift-day {
-      font-size: 0.625rem;
-    }
-
-    /* Smaller modal */
-    .modal__content {
-      width: 95%;
-      max-height: 85vh;
-    }
-
-    .modal__header {
-      padding: 1rem;
-    }
-
-    .modal__title {
-      font-size: 1rem;
-    }
-
-    .modal__body {
-      padding: 1rem;
-    }
-
-    .modal__footer {
-      padding: 1rem;
-    }
-
-    /* Full width dropdown list on mobile */
-    .dropdown__list {
-      left: 0.75rem !important;
-      right: 0.75rem !important;
-      width: auto !important;
-      max-width: calc(100vw - 1.5rem);
-    }
-  }
-
-  /* Extra small devices */
-  @media (max-width: 480px) {
-    .month-title {
-      font-size: 1.25rem;
-    }
-
-    .calendar-day {
-      min-height: 80px;
-      padding: 0.375rem 0.125rem;
-    }
-
-    .day-number {
-      font-size: 0.75rem;
-    }
-
-    .shift-person,
-    .shift-type,
-    .shift-day {
-      font-size: 0.5rem;
-    }
-
-    /* Hide day number text on very small screens */
-    .shift-day {
-      display: none;
-    }
-
-    /* Stack month nav on extra small */
-    .month-nav-left {
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .nav-button {
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-    }
-  }
 </style>
 </head>
-<body class="loading">
+<body>
 <div class="container">
   <header>
     <!-- Month navigation with filters on the right -->
@@ -780,8 +591,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-// Wrap all initialization in DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function() {
   function fmtDate(d){
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
@@ -1114,22 +923,12 @@ document.addEventListener('DOMContentLoaded', function() {
   
     buildList();
     refreshButton();
-    
-    // Mark dropdown as ready
-    wrap.classList.add('ready');
   }
   
   initMultiDrop('teamSelect','teamDropdown','Teams','All Teams');
   initMultiDrop('monthSelect','monthDropdown','Months','All Months');
 
-  // Render and remove loading state
   renderSelectedMonths();
-  
-  // Remove loading class after render
-  requestAnimationFrame(() => {
-    document.body.classList.remove('loading');
-    document.body.classList.add('loaded');
-  });
 
   async function downloadMonthAsImage(year, month, teams) {
     const tempContainer = document.createElement('div');
@@ -1273,7 +1072,6 @@ document.addEventListener('DOMContentLoaded', function() {
       closeDownloadModal();
     }
   });
-});
 </script>
 </body>
 </html>
