@@ -237,7 +237,6 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 0;
-    min-width: var(--calendar-min-width);
   }
 
   .calendar-day {
@@ -247,6 +246,7 @@
     border-right: 1px solid #e5e7eb;
     border-bottom: 1px solid #e5e7eb;
     background-color: #f1f8e9;
+    min-width: var(--calendar-min-width);
   }
 
   .calendar-day:nth-child(7n) {
@@ -267,7 +267,7 @@
   .shift-item {
     margin-top: 0.25rem;
     border-radius: 0.5rem;
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem;
   }
 
   .shift-person {
@@ -410,7 +410,6 @@
   .modal__info-label {
     font-weight: 600;
     color: #374151;
-    min-width: 60px;
   }
 
   .modal__info-value {
@@ -1142,19 +1141,18 @@ function calculateCalendarMinWidth() {
   if (!calendarGrid) return;
   
   const days = calendarGrid.querySelectorAll('.calendar-day');
-  let maxColumnWidth = 0;
+  let maxDayWidth = 0;
   
-  // Check first 7 days (first row) to get max width
-  for (let i = 0; i < Math.min(7, days.length); i++) {
-    const dayWidth = days[i].scrollWidth;
-    if (dayWidth > maxColumnWidth) {
-      maxColumnWidth = dayWidth;
+  // Loop through ALL calendar-day elements to find max width
+  days.forEach(day => {
+    const dayWidth = day.scrollWidth;
+    if (dayWidth > maxDayWidth) {
+      maxDayWidth = dayWidth;
     }
-  }
+  });
   
-  // Set min-width = max column width × 7
-  const totalMinWidth = maxColumnWidth * 7;
-  document.documentElement.style.setProperty('--calendar-min-width', totalMinWidth + 'px');
+  // Set min-width = max day width
+  document.documentElement.style.setProperty('--calendar-min-width', maxDayWidth + 'px');
 }
 
 window.addEventListener('load', () => {
