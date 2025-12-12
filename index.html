@@ -1,81 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SHIFT SCHEDULE 2026</title>
     <style>
-            :root { --header-height: 64px; }
-
-        /* header layout: left = nav, center = filters, right = download */
-        .header {
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            background: white;
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem 0;
-            box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.05);
-            flex-wrap: nowrap;
+        :root {
+            --header-height: 64px;
         }
-
-        /* left navigation group */
-        .navigation {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding-left: 0.25rem;
-        }
-
-        /* center filters - keep centered in header */
-        .filters {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-            justify-self: center;
-            height: 100%;
-        }
-
-        /* right download area */
-        .download-area {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 0.25rem;
-        }
-
-        .download-button {
-            padding: 0.45rem 0.8rem;
-            background: #10b981;
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 700;
-            transition: background 0.2s;
-        }
-        .download-button:hover { background: #059669; }
-
-        /* keep calendar columns aligned and weekday header sticky below .header */
-        .calendar {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed; /* ensures fixed column widths so header aligns with body */
-        }
-
-        .calendar thead th {
-            position: sticky;
-            top: calc(var(--header-height)); /* offset by header height */
-            z-index: 35;
-            background: #667eea; /* keep original header background */
-            color: white;
-        }
-        /* ensure equal column widths */
-        .calendar th, .calendar td { width: calc(100% / 7); }
 
         * {
             margin: 0;
@@ -85,6 +18,7 @@
 
         body {
             font-family: Arial, sans-serif;
+            font-size: 1rem;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 1rem;
@@ -100,57 +34,85 @@
             padding: 0 1.5rem 1.5rem 1.5rem;
         }
 
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: white;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0;
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+            flex-wrap: nowrap;
+        }
+
+        .navigation {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            justify-self: center;
+        }
+
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            justify-self: flex-start;
+            height: 100%;
+            padding-left: 0.25rem;
+        }
+
+        .download-area {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.25rem;
+        }
+
         .nav-button {
-            padding: 0.45rem 0.6rem;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: bold;
-            transition: background 0.3s;
+            /* kept for backwards compatibility; visuals come from .btn */
         }
 
-        .nav-button:hover {
-            background: #5568d3;
-        }
-
-        .nav-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+        .nav-button:hover {}
 
         .month-year {
-            font-size: 1.25rem;
-            font-weight: bold;
             color: #333;
             text-align: center;
-            min-width: 10rem;
+            min-width: 7.5rem;
+            font-size: inherit;
         }
 
-        /* Dropdown filter styles */
+        .download-button {
+            /* kept for backwards compatibility */
+        }
+
         .dropdown {
             position: relative;
             display: inline-block;
         }
+
         .dropdown-button {
+            /* shared styles with .btn, but can be overridden if needed */
             padding: 0.45rem 0.6rem;
             border-radius: 0.4rem;
             border: 1px solid #ccc;
             background: white;
-            font-size: 0.9rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            font-size: inherit;
+            font-family: inherit;
         }
+
         .dropdown-menu {
             position: absolute;
             top: 100%;
             left: 0;
             background: white;
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
             border-radius: 0.4rem;
             padding: 0.25rem;
             margin-top: 0.4rem;
@@ -159,7 +121,11 @@
             min-width: 9rem;
             overflow: auto;
         }
-        .dropdown.open .dropdown-menu { display: block; }
+
+        .dropdown.open .dropdown-menu {
+            display: block;
+        }
+
         .dropdown-item {
             padding: 0.4rem 0.6rem;
             cursor: pointer;
@@ -168,8 +134,11 @@
             align-items: center;
             border-radius: 0.25rem;
         }
-        .dropdown-item:hover { background: #f1f5f9; }
-        /* tick as square box on the left */
+
+        .dropdown-item:hover {
+            background: #f1f5f9;
+        }
+
         .dropdown-item .tick {
             width: 1.25rem;
             height: 1.25rem;
@@ -178,29 +147,38 @@
             justify-content: center;
             border: 1px solid #cbd5e1;
             background: #fff;
-            color: transparent; /* hide check when not selected */
+            color: transparent;
             margin-right: 0.8rem;
-            font-size: 0.9rem;
             box-sizing: border-box;
+            cursor: pointer;
+            user-select: none;
         }
+
         .dropdown-item.selected .tick {
             background: #2b6cb0;
             border-color: #2b6cb0;
-            color: #fff; /* show check in white when selected */
+            color: #fff;
         }
 
         .calendar {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
-        .calendar th {
+        .calendar thead th {
+            position: sticky;
+            top: calc(var(--header-height));
+            z-index: 35;
             background: #667eea;
             color: white;
             padding: 0.75rem;
             text-align: center;
-            font-size: 1rem;
-            font-weight: bold;
+        }
+
+        .calendar th,
+        .calendar td {
+            width: calc(100% / 7);
         }
 
         .calendar td {
@@ -208,12 +186,9 @@
             padding: 0.5rem;
             vertical-align: top;
             min-height: 8rem;
-            width: 14.28%;
         }
 
         .day-number {
-            font-weight: bold;
-            font-size: 1.1rem;
             margin-bottom: 0.5rem;
             color: #333;
             text-align: center;
@@ -223,20 +198,16 @@
             margin-bottom: 0.3rem;
             padding: 0.3rem;
             border-radius: 0.25rem;
-            font-size: 0.75rem;
         }
 
         .team-name {
-            font-weight: bold;
             display: block;
         }
 
         .shift-time {
-            font-size: 0.7rem;
             display: block;
         }
 
-        /* Shift colors */
         .shift-0000-0800 {
             background: #4a5568;
             color: white;
@@ -266,7 +237,6 @@
             background: #f7fafc;
         }
 
-        /* Responsive design */
         @media (max-width: 48rem) {
             .month-year {
                 font-size: 1.1rem;
@@ -277,7 +247,7 @@
                 font-size: 0.9rem;
             }
 
-            .calendar th {
+            .calendar thead th {
                 padding: 0.5rem;
                 font-size: 0.85rem;
             }
@@ -301,7 +271,11 @@
             .shift-time {
                 font-size: 0.6rem;
             }
-            .download-button { padding: 0.35rem 0.6rem; font-size: 0.85rem; }
+
+            .download-button {
+                padding: 0.35rem 0.6rem;
+                font-size: 0.85rem;
+            }
         }
 
         @media (max-width: 30rem) {
@@ -309,14 +283,20 @@
                 padding: 0.75rem;
             }
 
-            /* stack header groups on very small screens */
             .header {
                 display: flex;
                 flex-direction: column;
                 gap: 0.5rem;
                 align-items: stretch;
             }
-            .navigation, .filters, .download-area { justify-content: center; padding: 0; }
+
+            .navigation,
+            .filters,
+            .download-area {
+                justify-content: center;
+                padding: 0;
+            }
+
             .team-schedule {
                 font-size: 0.55rem;
                 padding: 0.15rem;
@@ -327,407 +307,520 @@
             }
         }
 
-        /* Modal: download confirmation */
-        .modal {
+        /* --- Download confirmation modal styles --- */
+        .modal-backdrop {
             position: fixed;
             inset: 0;
+            background: rgba(0, 0, 0, 0.45);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 60;
-        }
-        .modal.open { display: flex; }
-        .modal-backdrop {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.45);
-            backdrop-filter: blur(1px);
-        }
-        .modal-content {
-            position: relative;
-            background: white;
-            border-radius: 0.75rem;
+            z-index: 100;
             padding: 1rem;
-            max-width: 28rem;
-            width: calc(100% - 2rem);
-            box-shadow: 0 1rem 3rem rgba(0,0,0,0.35);
-            z-index: 65;
         }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 0.75rem;
+            width: 25vw;
+            max-height: 70vh;
+            /* make modal a column so header/body/footer can behave independently */
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.35);
+            padding: 0;
+        }
+
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
-        }
-        .modal-content h3 { 
-            margin: 0;
-            font-size: 1.05rem; 
-        }
-        .modal-close {
-            background: transparent;
-            border: none;
-            font-size: 1.5rem;
-            color: #6b7280;
-            cursor: pointer;
-            padding: 0;
-            width: 2rem;
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.25rem;
-            transition: background 0.2s, color 0.2s;
-        }
-        .modal-close:hover {
-            background: #f3f4f6;
-            color: #111827;
-        }
-        .modal-close:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .modal-body { color: #111827; font-size: 0.95rem; margin-bottom: 0.75rem; }
-        
-        /* Loading spinner */
-        .modal-loading {
-            display: none;
-            text-align: center;
-            padding: 2rem 1rem;
-            min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-loading.active { display: flex; }
-        .spinner {
-            border: 4px solid #f3f4f6;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .modal-loading p {
-            margin: 0;
-            color: #4b5563;
-            font-size: 0.95rem;
-        }
-        .modal-confirm, .modal-actions {
-            display: block;
-        }
-        .modal-confirm.hidden, .modal-actions.hidden {
-            display: none;
+            gap: 1rem;
+            /* sticky at top of the modal scrolling area */
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            padding: 1rem;
+            background: #fff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
         }
 
-        /* Loading spinner overlay - above modal */
-    .spinner-overlay {
-        position: fixed;
-        inset: 0;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 70;
-        background: rgba(0, 0, 0, 0.3);
-    }
-    .spinner-overlay.active { display: flex; }
-    .spinner-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 0.75rem;
-        box-shadow: 0 1rem 3rem rgba(0,0,0,0.35);
-        text-align: center;
-        min-width: 300px;
-    }
-    .spinner {
-        border: 4px solid #f3f4f6;
-        border-top: 4px solid #667eea;
-        border-radius: 50%;
-        width: 48px;
-        height: 48px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 1rem;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    .spinner-overlay p {
-        margin: 0;
-        color: #4b5563;
-        font-size: 0.95rem;
-    }
-    
-    /* Modal loading view - hidden now */
-    .modal-loading {
-        display: none;
-    }
-        </style>
+        .modal-title {
+            font-weight: 700;
+        }
+
+        .modal-body {
+            /* body scrolls inside modal; header/footer remain visible */
+            flex: 1 1 auto;
+            overflow: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            flex-direction: column;
+            /* stack into three rows: team, month, actions */
+            align-items: stretch;
+            gap: 0.5rem;
+            /* sticky at bottom of the modal scrolling area */
+            position: sticky;
+            bottom: 0;
+            z-index: 20;
+            padding: 0.75rem 1rem;
+            background: #fff;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .download-summary-row {
+            color: #374151;
+            font-size: 0.95rem;
+            padding-left: 0.25rem;
+            overflow: hidden;
+        }
+
+        .download-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        /* shared stacked list style for both team and month choices */
+        .list-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            padding-right: 0.25rem;
+            /* no internal scrolling — modal scrolls as a whole */
+            max-height: none;
+            overflow: visible;
+        }
+
+        /* dropdown-item already used for each row (tick + label) — ensure full width */
+        .list-stack .dropdown-item {
+            width: 100%;
+            padding: 0.45rem 0.6rem;
+            border-radius: 0.375rem;
+            border: 1px solid #e6e6e6;
+            background: #fafafa;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            justify-content: flex-start;
+        }
+
+        /* Shared button base */
+        .btn {
+            padding: 0.45rem 0.6rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: inherit;
+            font-family: inherit;
+            transition: background 0.2s, color 0.2s;
+            background: #f3f4f6;
+            color: #111827;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:disabled {
+            background: #e5e7eb;
+            cursor: not-allowed;
+            color: #9ca3af;
+        }
+
+        /* Variants */
+        .btn-primary {
+            background: #10b981;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+        }
+
+        .btn-secondary {
+            background: #e6e7ea;
+            color: #111827;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid transparent;
+        }
+
+        .download-summary {
+            margin-right: auto;
+            padding-left: 0.5rem;
+            color: #374151;
+            font-size: 0.95rem;
+            align-self: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 40ch;
+        }
+
+        /* Keep specific small tweaks for nav & dropdown visual needs if needed */
+        .nav-button {
+            min-width: 2.5rem;
+            padding: 0.35rem 0.55rem;
+        }
+
+        .dropdown-button {
+            border: 1px solid #ccc;
+            background: #fff;
+            padding: 0.4rem 0.6rem;
+        }
+
+        /* --- Preview modal styles --- */
+        .preview-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 110;
+            padding: 1rem;
+        }
+
+        .preview-modal-backdrop.open {
+            display: flex;
+        }
+
+        .preview-modal {
+            background: #fff;
+            border-radius: 0.75rem;
+            width: 90vw;
+            max-width: 60rem;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.35);
+        }
+
+        .preview-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .preview-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+            gap: 1rem;
+        }
+
+        .preview-item {
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .preview-item:hover {
+            transform: scale(1.02);
+        }
+
+        .preview-item canvas {
+            width: 100%;
+            display: block;
+        }
+
+        .preview-item-label {
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #374151;
+            background: white;
+        }
+
+        .preview-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+    </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
-            <!-- left: prev, current month, next -->
-            <div class="navigation" aria-label="month navigation">
-                <button class="nav-button" id="prevBtn" onclick="changeMonth(-1)"></button>
-                <div class="month-year" id="monthYear"></div>
-                <button class="nav-button" id="nextBtn" onclick="changeMonth(1)"></button>
-            </div>
-
-            <!-- center: filters -->
             <div class="filters" role="region" aria-label="filters">
                 <div class="dropdown" id="teamDropdown">
                     <button class="dropdown-button" id="teamDropdownBtn">Select Teams</button>
                     <div class="dropdown-menu" id="teamDropdownMenu"></div>
                 </div>
-
-                <div class="dropdown" id="monthDropdown">
-                    <button class="dropdown-button" id="monthDropdownBtn">Select Months</button>
-                    <div class="dropdown-menu" id="monthDropdownMenu"></div>
-                </div>
             </div>
 
-            <!-- right: download -->
+            <div class="navigation" aria-label="month navigation">
+                <button class="btn nav-button" id="prevBtn" onclick="changeMonth(-1)"></button>
+                <div class="month-year" id="monthYear"></div>
+                <button class="btn nav-button" id="nextBtn" onclick="changeMonth(1)"></button>
+            </div>
+
             <div class="download-area">
-                <button id="downloadBtn" class="download-button" title="Download schedule as image">Download</button>
+                <button id="downloadBtn" class="btn download-button">Download</button>
             </div>
         </div>
 
-        <!-- Spinner overlay - appears above modal -->
-        <div id="spinnerOverlay" class="spinner-overlay">
-            <div class="spinner-container">
-                <div class="spinner"></div>
-                <p>Generating <span id="spinnerProgress">0</span> of <span id="spinnerTotal">0</span> calendars...</p>
-            </div>
-        </div>
-
-        <!-- Download confirmation modal -->
-        <div id="downloadModal" class="modal" aria-hidden="true">
-            <div id="downloadBackdrop" class="modal-backdrop" tabindex="-1"></div>
-            <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="downloadModalTitle">
+        <!-- Download confirmation modal (module) -->
+        <div class="modal-backdrop" id="downloadModal" aria-hidden="true" role="dialog" aria-modal="true">
+            <div class="modal" role="document" aria-labelledby="downloadModalTitle">
                 <div class="modal-header">
-                    <h3 id="downloadModalTitle">Confirm Download</h3>
-                    <button id="modalCloseBtn" class="modal-close" aria-label="Close modal">×</button>
+                    <div class="modal-title" id="downloadModalTitle">Download schedule as image</div>
                 </div>
-                
-                <!-- Confirmation view -->
-                <div class="modal-confirm" id="modalConfirm">
-                    <div class="modal-body">
-                        <div><strong>Teams:</strong> <span id="modalTeams"></span></div>
-                        <div style="margin-top:0.5rem"><strong>Months:</strong> <span id="modalMonths"></span></div>
+
+                <div class="modal-body">
+                    <div>
+                        <strong>Choose teams</strong>
+                        <div style="margin-top:0.5rem;">
+                            <div class="dropdown-item" id="downloadSelectAllItem"><span class="tick">✓</span><span>Select all</span>
+                            </div>
+                        </div>
+                        <div class="list-stack" id="downloadTeamList" style="margin-top:0.5rem;"></div>
                     </div>
-                    <div class="modal-actions">
-                        <button id="cancelDownloadBtn" class="nav-button">Cancel</button>
-                        <button id="confirmDownloadBtn" class="download-button">Confirm</button>
+
+                    <div>
+                        <strong>Choose month</strong>
+                        <div style="margin-top:0.5rem;">
+                            <div class="dropdown-item" id="downloadMonthSelectAllItem"><span class="tick">✓</span><span>Select all</span>
+                            </div>
+                        </div>
+                        <!-- use the exact same classes/styles as the team list -->
+                        <div class="list-stack" id="downloadMonthList" style="margin-top:0.5rem;"></div>
                     </div>
+                </div>
+
+                <div class="modal-footer">
+                    <!-- row 1: team summary -->
+                    <div id="downloadSummaryTeam" class="download-summary-row">Team: None</div>
+                    <!-- row 2: month summary -->
+                    <div id="downloadSummaryMonth" class="download-summary-row">Month: None</div>
+                    <!-- row 3: buttons -->
+                    <div class="download-actions">
+                        <button id="cancelDownloadBtn" class="btn btn-secondary">Cancel</button>
+                        <button id="confirmDownloadBtn" class="btn btn-primary">Confirm & Prepare</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-modal-backdrop" id="previewModal">
+            <div class="preview-modal">
+                <div class="preview-modal-header">
+                    <div class="modal-title">Preview Calendar Images</div>
+                    <button class="btn btn-ghost" id="closePreviewBtn">✕</button>
+                </div>
+                <div class="preview-modal-body">
+                    <div class="preview-grid" id="previewGrid"></div>
+                </div>
+                <div class="preview-modal-footer">
+                    <button class="btn btn-secondary" id="backToSelectBtn">Back</button>
+                    <button class="btn btn-primary" id="downloadAllBtn">Download All</button>
                 </div>
             </div>
         </div>
 
         <table class="calendar" id="calendar"></table>
-
     </div>
 
     <script>
-        // Teams and their initial states (January 1, 2026)
         const teams = ['SITI', 'IRA', 'EKIN', 'BALQIS'];
-        
-        // Shift types
         const shifts = ['0800-1600', '0000-0800', '1600-0000'];
-        
-        // Friendly names for shifts
         const shiftNames = {
             '0000-0800': 'Night',
             '0800-1600': 'Morning',
             '1600-0000': 'Evening'
         };
-        
-        // Current month/year (declare before using in selectedMonths)
-        let currentMonth = 0; // January 2026
-        let currentYear = 2026;
-        
-        // Selected filters (default: all teams, all months)
-        let selectedTeams = [...teams];
-        let selectedMonths = Array.from({ length: 12 }, (_, i) => i); // select all months by default
 
-        // Initial state for January 1, 2026
+        const today = new Date();
+        const MIN_YEAR = 2026,
+            MAX_YEAR = 2026;
+        const MIN_MONTH = 0,
+            MAX_MONTH = 11;
+
+        // Initialize to current date
+        let currentMonth = today.getMonth(); // 0-11
+        let currentYear = today.getFullYear();
+
+        // Clamp to valid range [Jan 2026 - Dec 2026]
+        const minDate = new Date(MIN_YEAR, MIN_MONTH, 1);
+        const maxDate = new Date(MAX_YEAR, MAX_MONTH, 1);
+        const currentDate = new Date(currentYear, currentMonth, 1);
+
+        if (currentDate < minDate) {
+            // Before Jan 2026 - show Jan 2026
+            currentYear = MIN_YEAR;
+            currentMonth = MIN_MONTH;
+        } else if (currentDate > maxDate) {
+            // After Dec 2026 - show Dec 2026
+            currentYear = MAX_YEAR;
+            currentMonth = MAX_MONTH;
+        }
+        // else: current date is within range, use it as is
+
+        let selectedTeams = [...teams];
+
         const initialState = {
             'SITI': { shift: '1600-0000', dayInCycle: 5 },
             'IRA': { shift: 'off', dayInCycle: 7 },
             'EKIN': { shift: '0800-1600', dayInCycle: 3 },
             'BALQIS': { shift: '0000-0800', dayInCycle: 1 }
         };
-        
-        // Calculate schedule for a specific date
+
         function getScheduleForDate(date) {
             const jan1_2026 = new Date(2026, 0, 1);
             const daysDiff = Math.floor((date - jan1_2026) / (1000 * 60 * 60 * 24));
-            
             const schedule = {};
-            
+
             for (const team of teams) {
                 const initial = initialState[team];
                 let dayInCycle = initial.dayInCycle + daysDiff;
-                
-                // Handle the 8-day cycle (6 work days + 2 off days)
                 dayInCycle = ((dayInCycle - 1) % 8) + 1;
-                
+
                 if (dayInCycle === 7) {
                     schedule[team] = { shift: 'off', dayInCycle: 7 };
                 } else if (dayInCycle === 8) {
                     schedule[team] = { shift: 'rest', dayInCycle: 8 };
                 } else {
-                    // Determine which shift based on rotation
                     let currentShift;
-                    
-                    // For each team, calculate their shift based on rotation
+
                     if (team === 'SITI') {
                         const workCyclesPassed = Math.floor((daysDiff + initial.dayInCycle - 1) / 8);
-                        const shiftIndex = (2 + workCyclesPassed) % 3; // Starts at index 2 (1600-0000)
+                        const shiftIndex = (2 + workCyclesPassed) % 3;
                         currentShift = shifts[shiftIndex];
                     } else if (team === 'IRA') {
-                        const adjustedDays = daysDiff - 2; // Jan 3 is day 0 for IRA's first work cycle
+                        const adjustedDays = daysDiff - 2;
                         if (adjustedDays < 0) {
                             if (dayInCycle === 7) currentShift = 'off';
                             else if (dayInCycle === 8) currentShift = 'rest';
                         } else {
                             const workCyclesPassed = Math.floor((adjustedDays) / 8);
-                            const shiftIndex = (2 + workCyclesPassed) % 3; // Starts at index 2 (1600-0000)
+                            const shiftIndex = (2 + workCyclesPassed) % 3;
                             currentShift = shifts[shiftIndex];
                         }
                     } else if (team === 'EKIN') {
                         const workCyclesPassed = Math.floor((daysDiff + initial.dayInCycle - 1) / 8);
-                        const shiftIndex = (0 + workCyclesPassed) % 3; // Starts at index 0 (0800-1600)
+                        const shiftIndex = (0 + workCyclesPassed) % 3;
                         currentShift = shifts[shiftIndex];
                     } else if (team === 'BALQIS') {
                         const workCyclesPassed = Math.floor((daysDiff + initial.dayInCycle - 1) / 8);
-                        const shiftIndex = (1 + workCyclesPassed) % 3; // Starts at index 1 (0000-0800)
+                        const shiftIndex = (1 + workCyclesPassed) % 3;
                         currentShift = shifts[shiftIndex];
                     }
-                    
+
                     schedule[team] = { shift: currentShift, dayInCycle: dayInCycle };
                 }
             }
-            
+
             return schedule;
         }
 
-        // update CSS var for header height so weekday header sticks correctly
         function updateHeaderHeight() {
             const hdr = document.querySelector('.header');
             const h = hdr ? Math.ceil(hdr.getBoundingClientRect().height) : 0;
             document.documentElement.style.setProperty('--header-height', `${h}px`);
         }
-        // call on resize/initial
-        window.addEventListener('resize', updateHeaderHeight);
-        window.addEventListener('load', updateHeaderHeight);
 
-        // Generate calendar for the current month
-        function getVisibleMonths() {
-             const months = selectedMonths.length ? selectedMonths.slice() : Array.from({ length: 12 }, (_, i) => i);
-             months.sort((a, b) => a - b);
-             return months;
-         }
-         function generateCalendar(root = document) {
-             const calendar = root.querySelector('#calendar');
-             const monthYear = root.querySelector('#monthYear');
-             const prevBtn = root.querySelector('#prevBtn');
-             const nextBtn = root.querySelector('#nextBtn');
-             
-            // treat empty selection as "select all" for rendering
-             const teamsToShow = selectedTeams.length ? selectedTeams : [...teams];
-             const monthsToShow = getVisibleMonths();
+        function generateCalendar() {
+            const calendar = document.querySelector('#calendar');
+            const monthYear = document.querySelector('#monthYear');
+            const prevBtn = document.querySelector('#prevBtn');
+            const nextBtn = document.querySelector('#nextBtn');
+            const minDate = new Date(MIN_YEAR, MIN_MONTH, 1);
+            const maxDate = new Date(MAX_YEAR, MAX_MONTH, 1);
 
-            // if no months selected, show nothing and disable nav
-            if (monthsToShow.length === 0) {
-                calendar.innerHTML = '';
-                monthYear.textContent = 'No month selected';
-                prevBtn.textContent = '';
-                nextBtn.textContent = '';
-                prevBtn.disabled = true;
-                nextBtn.disabled = true;
-                return;
+            const teamsToShow = selectedTeams.length ? selectedTeams : [...teams];
+
+            const date = new Date(currentYear, currentMonth, 1);
+            const monthName = date.toLocaleString('en-US', { month: 'long' });
+            monthYear.textContent = `${monthName} ${currentYear}`;
+
+            const prevDate = new Date(currentYear, currentMonth - 1, 1);
+            const nextDate = new Date(currentYear, currentMonth + 1, 1);
+            prevBtn.textContent = '◀';
+            nextBtn.textContent = '▶';
+            prevBtn.disabled = prevDate < minDate;
+            nextBtn.disabled = nextDate > maxDate;
+
+            calendar.innerHTML = '';
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+            for (const day of daysOfWeek) {
+                const th = document.createElement('th');
+                th.textContent = day;
+                headerRow.appendChild(th);
             }
+            thead.appendChild(headerRow);
+            calendar.appendChild(thead);
 
-            // ensure currentMonth is within visible months
-            if (!monthsToShow.includes(currentMonth)) currentMonth = monthsToShow[0];
-             
-             const date = new Date(currentYear, currentMonth, 1);
-             const monthName = date.toLocaleString('en-US', { month: 'long' });
-             monthYear.textContent = `${monthName} ${currentYear}`;
-             
-             // Helper to get month name for given year/month
-             function getMonthName(y, m) {
-                 return new Date(y, m, 1).toLocaleString('en-US', { month: 'long' });
-             }
- 
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const tbody = document.createElement('tbody');
 
-            // Determine labels for prev/next buttons (looping within selected months)
-            const idx = monthsToShow.indexOf(currentMonth);
-            const prevIndex = (idx - 1 + monthsToShow.length) % monthsToShow.length;
-            const nextIndex = (idx + 1) % monthsToShow.length;
-            prevBtn.textContent = getMonthName(currentYear, monthsToShow[prevIndex]);
-            nextBtn.textContent = getMonthName(currentYear, monthsToShow[nextIndex]);
-            prevBtn.disabled = monthsToShow.length <= 1;
-            nextBtn.disabled = monthsToShow.length <= 1;
- 
-             // Build table with thead/tbody so weekday header can be sticky
-             calendar.innerHTML = '';
-             const thead = document.createElement('thead');
-             const headerRow = document.createElement('tr');
-             const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-             for (const day of daysOfWeek) {
-                 const th = document.createElement('th');
-                 th.textContent = day;
-                 headerRow.appendChild(th);
-             }
-             thead.appendChild(headerRow);
-             calendar.appendChild(thead);
+            let dayCount = 1;
+            let rowCount = Math.ceil((firstDay + daysInMonth) / 7);
 
-             const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-             const tbody = document.createElement('tbody');
+            for (let i = 0; i < rowCount; i++) {
+                const row = document.createElement('tr');
+                for (let j = 0; j < 7; j++) {
+                    const cell = document.createElement('td');
 
-             let dayCount = 1;
-             let rowCount = Math.ceil((firstDay + daysInMonth) / 7);
-             for (let i = 0; i < rowCount; i++) {
-                 const row = document.createElement('tr');
-                 for (let j = 0; j < 7; j++) {
-                     const cell = document.createElement('td');
-                     if (i === 0 && j < firstDay) {
-                         cell.classList.add('empty-day');
-                     } else if (dayCount > daysInMonth) {
-                         cell.classList.add('empty-day');
-                     } else {
-                         const currentDate = new Date(currentYear, currentMonth, dayCount);
-                         const schedule = getScheduleForDate(currentDate);
-                         const dayNumber = document.createElement('div');
-                         dayNumber.className = 'day-number';
-                         dayNumber.textContent = dayCount;
-                         cell.appendChild(dayNumber);
+                    if (i === 0 && j < firstDay) {
+                        cell.classList.add('empty-day');
+                    } else if (dayCount > daysInMonth) {
+                        cell.classList.add('empty-day');
+                    } else {
+                        const currentDate = new Date(currentYear, currentMonth, dayCount);
+                        const schedule = getScheduleForDate(currentDate);
+                        const dayNumber = document.createElement('div');
+                        dayNumber.className = 'day-number';
+                        dayNumber.textContent = dayCount;
+                        cell.appendChild(dayNumber);
 
                         for (const team of teamsToShow) {
                             const teamDiv = document.createElement('div');
                             teamDiv.className = 'team-schedule';
                             const shift = schedule[team].shift;
                             teamDiv.classList.add(`shift-${shift.replace(':', '')}`);
+
                             const teamName = document.createElement('span');
                             teamName.className = 'team-name';
                             teamName.textContent = team;
                             teamDiv.appendChild(teamName);
+
                             const shiftTime = document.createElement('span');
                             shiftTime.className = 'shift-time';
-                            shiftTime.textContent = shift === 'off'
-                                ? 'Off Day'
-                                : shift === 'rest'
-                                ? 'Rest Day'
-                                : (shiftNames[shift] || shift);
+                            shiftTime.textContent = shift === 'off' ? 'Off Day' : shift === 'rest' ? 'Rest Day' : (shiftNames[shift] || shift);
                             teamDiv.appendChild(shiftTime);
+
                             const dayInCycle = schedule[team].dayInCycle;
                             if (shift !== 'off' && shift !== 'rest') {
                                 const kerjaInfo = document.createElement('span');
@@ -738,60 +831,37 @@
                             cell.appendChild(teamDiv);
                         }
                         dayCount++;
-                     }
-                     row.appendChild(cell);
-                 }
-                 tbody.appendChild(row);
-             }
-             calendar.appendChild(tbody);
-
-            // update header height after DOM changes (weekday sticky top depends on it)
-            setTimeout(updateHeaderHeight, 0);
-            
-             // Buttons always enabled (months loop)
-             prevBtn.disabled = false;
-             nextBtn.disabled = false;
-         }
- 
-        // Change month (move within visible/selected months)
-        function changeMonth(direction) {
-            const months = getVisibleMonths();
-            if (months.length === 0) return;
-            let idx = months.indexOf(currentMonth);
-            if (idx === -1) {
-                currentMonth = months[0];
-                generateCalendar();
-                return;
+                    }
+                    row.appendChild(cell);
+                }
+                tbody.appendChild(row);
             }
-            const newIdx = (idx + direction + months.length) % months.length;
-            currentMonth = months[newIdx];
+            calendar.appendChild(tbody);
+            setTimeout(updateHeaderHeight, 0);
+        }
+
+        function changeMonth(direction) {
+            const candidate = new Date(currentYear, currentMonth + direction, 1);
+            const minDate = new Date(MIN_YEAR, MIN_MONTH, 1);
+            const maxDate = new Date(MAX_YEAR, MAX_MONTH, 1);
+            if (candidate < minDate || candidate > maxDate) return;
+            currentYear = candidate.getFullYear();
+            currentMonth = candidate.getMonth();
             generateCalendar();
         }
 
         function populateFilters() {
             const teamMenu = document.getElementById('teamDropdownMenu');
-            const monthMenu = document.getElementById('monthDropdownMenu');
             const teamBtn = document.getElementById('teamDropdownBtn');
-            const monthBtn = document.getElementById('monthDropdownBtn');
 
-            // Populate teams menu
             teamMenu.innerHTML = '';
 
-            // "Select All" for teams (toggle: select all / clear all)
             const teamAll = document.createElement('div');
             teamAll.className = 'dropdown-item' + (selectedTeams.length === teams.length ? ' selected' : '');
-            teamAll.dataset.value = '__select_all_teams';
             teamAll.innerHTML = `<span class="tick">✓</span><span>Select All</span>`;
             teamAll.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (selectedTeams.length === teams.length) {
-                    // currently all selected -> clear selection
-                    selectedTeams = [];
-                } else {
-                    // select all
-                    selectedTeams = [...teams];
-                }
-                // do NOT auto-convert empty -> all; allow empty selection
+                selectedTeams = selectedTeams.length === teams.length ? [] : [...teams];
                 populateFilters();
                 generateCalendar();
             });
@@ -800,408 +870,412 @@
             for (const t of teams) {
                 const item = document.createElement('div');
                 item.className = 'dropdown-item' + (selectedTeams.includes(t) ? ' selected' : '');
-                item.dataset.value = t;
                 item.innerHTML = `<span class="tick">✓</span><span>${t}</span>`;
                 item.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const idx = selectedTeams.indexOf(t);
                     if (idx === -1) selectedTeams.push(t);
                     else selectedTeams.splice(idx, 1);
-                    // allow empty selection (do not force select-all)
-                    populateFilters(); // refresh UI
+                    populateFilters();
                     generateCalendar();
                 });
                 teamMenu.appendChild(item);
             }
 
-            // Populate months menu
-            monthMenu.innerHTML = '';
-
-            // "Select All" for months (toggle: select all / clear all)
-            const monthsAll = document.createElement('div');
-            monthsAll.className = 'dropdown-item' + (selectedMonths.length === 12 ? ' selected' : '');
-            monthsAll.dataset.value = '__select_all_months';
-            monthsAll.innerHTML = `<span class="tick">✓</span><span>Select All</span>`;
-            monthsAll.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (selectedMonths.length === 12) {
-                    // clear all months
-                    selectedMonths = [];
-                } else {
-                    // select all months
-                    selectedMonths = Array.from({length:12}, (_,i) => i);
-                }
-                // update visible month only if there is at least one selected
-                if (selectedMonths.length > 0) currentMonth = selectedMonths[0];
-                populateFilters();
-                generateCalendar();
-            });
-            monthMenu.appendChild(monthsAll);
-
-            for (let m = 0; m < 12; m++) {
-                const name = new Date(2026, m, 1).toLocaleString('en-US', { month: 'long' });
-                const item = document.createElement('div');
-                const selected = selectedMonths.includes(m);
-                item.className = 'dropdown-item' + (selected ? ' selected' : '');
-                item.dataset.value = String(m);
-                item.innerHTML = `<span class="tick">✓</span><span>${name}</span>`;
-                item.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const i = selectedMonths.indexOf(m);
-                    if (i === -1) selectedMonths.push(m);
-                    else selectedMonths.splice(i, 1);
-                    // if no months selected, leave selectedMonths empty (do not force select-all)
-                    if (selectedMonths.length > 0) {
-                        currentMonth = selectedMonths[0];
-                    }
-                    populateFilters();
-                    generateCalendar();
-                });
-                monthMenu.appendChild(item);
-            }
-            
-            // Keep clicks inside menus from closing dropdown (close only on outside click)
-            teamMenu.addEventListener('click', e => e.stopPropagation());
-            monthMenu.addEventListener('click', e => e.stopPropagation());
-
-            // Button open/close handlers
             const teamDropdown = document.getElementById('teamDropdown');
-            const monthDropdown = document.getElementById('monthDropdown');
+
             teamBtn.onclick = (e) => {
                 e.stopPropagation();
                 const opened = teamDropdown.classList.toggle('open');
-                if (opened) monthDropdown.classList.remove('open');
-                // header height might change (dropdown expands) -> update
-                setTimeout(updateHeaderHeight, 0);
-            };
-            monthBtn.onclick = (e) => {
-                e.stopPropagation();
-                const opened = monthDropdown.classList.toggle('open');
-                if (opened) teamDropdown.classList.remove('open');
                 setTimeout(updateHeaderHeight, 0);
             };
         }
 
-        // close dropdowns when clicking outside
         document.addEventListener('click', () => {
             document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
             setTimeout(updateHeaderHeight, 0);
         });
 
-        // Initialize filters + calendar
+        window.addEventListener('resize', updateHeaderHeight);
+        window.addEventListener('load', updateHeaderHeight);
+
         populateFilters();
         generateCalendar();
-        // initial header height calc
         setTimeout(updateHeaderHeight, 0);
 
-        // --- Custom Calendar Image Generation ---
-        async function drawCalendarToCanvas(month, year, teamsToShow) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Scale factor for high quality export
-            const scale = 4;
-            
-            // Colors
-            const colors = {
-                background: '#ffffff',
-                header: '#667eea',
-                headerText: '#ffffff',
-                gridLine: '#dddddd',
-                dayNumber: '#333333',
-                '0000-0800': { bg: '#4a5568', text: '#ffffff' },
-                '0800-1600': { bg: '#48bb78', text: '#ffffff' },
-                '1600-0000': { bg: '#ed8936', text: '#ffffff' },
-                'off': { bg: '#e2e8f0', text: '#4a5568' },
-                'rest': { bg: '#e2e8f0', text: '#4a5568' }
-            };
-            
-            // Calculate minimum column width based on content (base size)
-            ctx.font = 'bold 32px Arial';
-            let maxTextWidth = 0;
-            
-            // Check team names
-            teamsToShow.forEach(team => {
-                const width = ctx.measureText(team).width;
-                if (width > maxTextWidth) maxTextWidth = width;
-            });
-            
-            // Check shift names
-            ctx.font = '24px Arial';
-            Object.values(shiftNames).forEach(shift => {
-                const width = ctx.measureText(shift).width;
-                if (width > maxTextWidth) maxTextWidth = width;
-            });
-            const offWidth = ctx.measureText('Off Day').width;
-            const restWidth = ctx.measureText('Rest Day').width;
-            if (offWidth > maxTextWidth) maxTextWidth = offWidth;
-            if (restWidth > maxTextWidth) maxTextWidth = restWidth;
-            
-            // Base dimensions
-            const baseCellWidth = Math.max(maxTextWidth + 80, 200);
-            const baseWidth = baseCellWidth * 7;
-            const baseHeight = 1800;
-            
-            // Apply scale for high resolution
-            const cellWidth = baseCellWidth * scale;
-            const width = baseWidth * scale;
-            const height = baseHeight * scale;
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            // Scale context for all operations
-            ctx.scale(scale, scale);
-            
-            // Fill background
-            ctx.fillStyle = colors.background;
-            ctx.fillRect(0, 0, baseWidth, baseHeight);
-            
-            // Draw title
-            const monthName = new Date(year, month, 1).toLocaleString('en-US', { month: 'long' });
-            ctx.fillStyle = colors.header;
-            ctx.fillRect(0, 0, baseWidth, 100);
-            ctx.fillStyle = colors.headerText;
-            ctx.font = 'bold 48px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`${monthName} ${year}`, baseWidth / 2, 50);
-            
-            // Draw weekday headers
-            const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const headerY = 100;
-            const headerHeight = 60;
-            
-            ctx.fillStyle = colors.header;
-            ctx.fillRect(0, headerY, baseWidth, headerHeight);
-            ctx.fillStyle = colors.headerText;
-            ctx.font = 'bold 28px Arial';
-            
-            for (let i = 0; i < 7; i++) {
-                ctx.fillText(daysOfWeek[i], baseCellWidth * i + baseCellWidth / 2, headerY + headerHeight / 2);
-            }
-            
-            // Calculate calendar layout
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const rowCount = Math.ceil((firstDay + daysInMonth) / 7);
-            const cellHeight = (baseHeight - headerY - headerHeight) / rowCount;
-            
-            // Draw grid and days
-            let dayCount = 1;
-            for (let row = 0; row < rowCount; row++) {
-                for (let col = 0; col < 7; col++) {
-                    const x = col * baseCellWidth;
-                    const y = headerY + headerHeight + row * cellHeight;
-                    
-                    // Draw cell border
-                    ctx.strokeStyle = colors.gridLine;
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(x, y, baseCellWidth, cellHeight);
-                    
-                    // Draw day content
-                    if (row === 0 && col < firstDay) {
-                        // Empty cell before month starts
-                        continue;
-                    } else if (dayCount > daysInMonth) {
-                        // Empty cell after month ends
-                        continue;
+        // --- Download modal logic (module) ---
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadModal = document.getElementById('downloadModal');
+        const cancelDownloadBtn = document.getElementById('cancelDownloadBtn');
+        const confirmDownloadBtn = document.getElementById('confirmDownloadBtn');
+        const downloadTeamList = document.getElementById('downloadTeamList');
+        const downloadSelectAllItem = document.getElementById('downloadSelectAllItem');
+        const downloadMonthSelectAllItem = document.getElementById('downloadMonthSelectAllItem');
+        const downloadMonthList = document.getElementById('downloadMonthList');
+
+        // modal-local selections (start unselected by default)
+        let downloadSelectedMonths = [];
+        let downloadSelectedTeams = [];
+
+        function openDownloadModal() {
+            // reset modal selections (unselect all by default)
+            downloadSelectedTeams = [];
+            downloadSelectedMonths = [];
+            populateDownloadTeams();
+            populateDownloadMonths();
+            updateDownloadMonthSelectAllState();
+            updateDownloadSelectAllState();
+            // ensure confirm disabled until at least one team AND one month selected
+            updateConfirmButtonState();
+
+            // open modal, make it focusable/inert handling for accessibility
+            downloadModal.classList.add('open');
+            downloadModal.removeAttribute('aria-hidden');
+            downloadModal.removeAttribute('inert');
+            setTimeout(() => {
+                updateHeaderHeight();
+                // focus first focusable inside modal (prefer confirm button)
+                const first = downloadModal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                if (first) first.focus();
+            }, 0);
+        }
+
+        function closeDownloadModalFn() {
+            // move focus out of modal before hiding to avoid aria-hidden focus blocking
+            try {
+                if (downloadModal.contains(document.activeElement)) downloadBtn.focus();
+            } catch (e) { /* ignore */ }
+            downloadModal.classList.remove('open');
+            downloadModal.setAttribute('aria-hidden', 'true');
+            // make backdrop inert so it and descendants are removed from the accessibility tree
+            downloadModal.setAttribute('inert', '');
+            setTimeout(updateHeaderHeight, 0);
+        }
+
+        function populateDownloadTeams() {
+            downloadTeamList.innerHTML = '';
+            for (const t of teams) {
+                const el = document.createElement('div');
+                el.className = 'dropdown-item' + (downloadSelectedTeams.includes(t) ? ' selected' : '');
+                el.dataset.value = t;
+                el.innerHTML = `<span class="tick">✓</span><span>${t}</span>`;
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isSelected = el.classList.toggle('selected');
+                    if (isSelected) {
+                        if (!downloadSelectedTeams.includes(t)) downloadSelectedTeams.push(t);
                     } else {
-                        const currentDate = new Date(year, month, dayCount);
-                        const schedule = getScheduleForDate(currentDate);
-                        
-                        // Draw day number
-                        ctx.fillStyle = colors.dayNumber;
-                        ctx.font = 'bold 44px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.fillText(dayCount, x + baseCellWidth / 2, y + 50);
-                        
-                        // Draw team schedules
-                        const teamHeight = (cellHeight - 70) / teamsToShow.length;
-                        teamsToShow.forEach((team, idx) => {
-                            const teamY = y + 70 + idx * teamHeight;
-                            const shift = schedule[team].shift;
-                            const color = colors[shift] || colors['off'];
-                            
-                            // Draw team background
-                            ctx.fillStyle = color.bg;
-                            ctx.fillRect(x + 10, teamY + 5, baseCellWidth - 20, teamHeight - 10);
-                            
-                            // Draw team name
-                            ctx.fillStyle = color.text;
-                            ctx.font = 'bold 32px Arial';
-                            ctx.textAlign = 'left';
-                            ctx.fillText(team, x + 20, teamY + teamHeight / 3);
-                            
-                            // Draw shift info
-                            ctx.font = '24px Arial';
-                            const shiftText = shift === 'off' ? 'Off Day' :
-                                            shift === 'rest' ? 'Rest Day' :
-                                            shiftNames[shift] || shift;
-                            ctx.fillText(shiftText, x + 20, teamY + teamHeight / 3 + 35);
-                            
-                            // Draw day in cycle
-                            if (shift !== 'off' && shift !== 'rest') {
-                                ctx.fillText(`Day ${schedule[team].dayInCycle}`, x + 20, teamY + teamHeight / 3 + 65);
-                            }
-                        });
-                        
-                        dayCount++;
+                        downloadSelectedTeams = downloadSelectedTeams.filter(x => x !== t);
                     }
+                    updateDownloadSelectAllState();
+                });
+                downloadTeamList.appendChild(el);
+            }
+            updateDownloadSelectAllState();
+        }
+
+        function updateDownloadSelectAllState() {
+            const items = Array.from(downloadTeamList.querySelectorAll('.dropdown-item'));
+            const selected = items.filter(i => i.classList.contains('selected'));
+            downloadSelectAllItem.classList.toggle('selected', items.length > 0 && selected.length === items.length);
+            updateConfirmButtonState();
+            updateDownloadSummary();
+        }
+
+        downloadSelectAllItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const items = Array.from(downloadTeamList.querySelectorAll('.dropdown-item'));
+            const allSelected = downloadSelectAllItem.classList.contains('selected');
+            items.forEach(i => i.classList.toggle('selected', !allSelected));
+            // sync modal-local selection
+            downloadSelectedTeams = allSelected ? [] : items.map(i => i.dataset.value);
+            updateDownloadSelectAllState();
+            updateDownloadSummary();
+        });
+
+        function populateDownloadMonths() {
+            downloadMonthList.innerHTML = '';
+            for (let y = MIN_YEAR; y <= MAX_YEAR; y++) {
+                for (let m = 0; m < 12; m++) {
+                    const candidate = new Date(y, m, 1);
+                    const minD = new Date(MIN_YEAR, MIN_MONTH, 1);
+                    const maxD = new Date(MAX_YEAR, MAX_MONTH, 1);
+                    if (candidate < minD || candidate > maxD) continue;
+                    const val = `${y}-${String(m + 1).padStart(2, '0')}`;
+                    // show only first 3 letters of month (no year)
+                    const label = candidate.toLocaleString('en-US', { month: 'short' });
+                    const it = document.createElement('div');
+                    it.className = 'dropdown-item' + (downloadSelectedMonths.includes(val) ? ' selected' : '');
+                    it.dataset.value = val;
+                    it.innerHTML = `<span class="tick">✓</span><span>${label}</span>`;
+                    it.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        // toggle selection for months (multi-select)
+                        const isSelected = it.classList.toggle('selected');
+                        if (isSelected) {
+                            if (!downloadSelectedMonths.includes(val)) downloadSelectedMonths.push(val);
+                        } else {
+                            downloadSelectedMonths = downloadSelectedMonths.filter(x => x !== val);
+                        }
+                        updateDownloadMonthSelectAllState();
+                    });
+                    downloadMonthList.appendChild(it);
                 }
             }
-            
+            updateDownloadMonthSelectAllState();
+        }
+
+        function updateDownloadMonthSelectAllState() {
+            const items = Array.from(downloadMonthList.querySelectorAll('.dropdown-item'));
+            if (items.length === 0) {
+                downloadMonthSelectAllItem.classList.remove('selected');
+                updateConfirmButtonState();
+                updateDownloadSummary();
+                return;
+            }
+            const allSelected = items.every(i => downloadSelectedMonths.includes(i.dataset.value));
+            downloadMonthSelectAllItem.classList.toggle('selected', allSelected);
+            updateConfirmButtonState();
+            updateDownloadSummary();
+        }
+
+        downloadMonthSelectAllItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const items = Array.from(downloadMonthList.querySelectorAll('.dropdown-item'));
+            const allSelected = downloadMonthSelectAllItem.classList.contains('selected');
+            if (allSelected) {
+                // deselect all
+                items.forEach(i => i.classList.remove('selected'));
+                downloadSelectedMonths = [];
+            } else {
+                // select all
+                items.forEach(i => i.classList.add('selected'));
+                downloadSelectedMonths = items.map(i => i.dataset.value);
+            }
+            updateDownloadMonthSelectAllState();
+            updateDownloadSummary();
+        });
+
+        downloadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openDownloadModal();
+        });
+        cancelDownloadBtn.addEventListener('click', (e) => { e.stopPropagation(); closeDownloadModalFn(); });
+
+        confirmDownloadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const chosenTeams = downloadSelectedTeams;
+            const chosenMonths = downloadSelectedMonths;
+            closeDownloadModalFn();
+            // Generate and show preview
+            generateCalendarPreviews(chosenTeams, chosenMonths);
+        });
+
+        function generateCalendarPreviews(teams, months) {
+            const previewModal = document.getElementById('previewModal');
+            const previewGrid = document.getElementById('previewGrid');
+
+            previewGrid.innerHTML = '';
+
+            months.forEach(monthVal => {
+                const [year, month] = monthVal.split('-');
+                const canvas = createCalendarCanvas(parseInt(year), parseInt(month) - 1, teams);
+
+                const item = document.createElement('div');
+                item.className = 'preview-item';
+
+                const label = document.createElement('div');
+                label.className = 'preview-item-label';
+                const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+                label.textContent = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+                item.appendChild(canvas);
+                item.appendChild(label);
+
+                item.addEventListener('click', () => {
+                    downloadCanvas(canvas, `schedule-${monthVal}.png`);
+                });
+
+                previewGrid.appendChild(item);
+            });
+
+            previewModal.classList.add('open');
+        }
+
+        function createCalendarCanvas(year, month, teams) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas size
+            canvas.width = 800;
+            canvas.height = 900;
+
+            // Background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Header
+            ctx.fillStyle = '#667eea';
+            ctx.fillRect(0, 0, canvas.width, 60);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            const date = new Date(year, month, 1);
+            const monthName = date.toLocaleString('en-US', { month: 'long' });
+            ctx.fillText(`${monthName} ${year}`, canvas.width / 2, 38);
+
+            // Days of week header
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const cellWidth = canvas.width / 7;
+            const headerY = 80;
+
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = '#333333';
+            days.forEach((day, i) => {
+                ctx.textAlign = 'center';
+                ctx.fillText(day, cellWidth * i + cellWidth / 2, headerY);
+            });
+
+            // Calendar grid
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const cellHeight = 120;
+            let dayCount = 1;
+            const startY = 100;
+
+            for (let week = 0; week < 6 && dayCount <= daysInMonth; week++) {
+                for (let day = 0; day < 7; day++) {
+                    if (week === 0 && day < firstDay) continue;
+                    if (dayCount > daysInMonth) break;
+
+                    const x = day * cellWidth;
+                    const y = startY + week * cellHeight;
+
+                    // Cell border
+                    ctx.strokeStyle = '#dddddd';
+                    ctx.strokeRect(x, y, cellWidth, cellHeight);
+
+                    // Day number
+                    ctx.fillStyle = '#333333';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(dayCount, x + 8, y + 18);
+
+                    // Get schedule for this day
+                    const currentDate = new Date(year, month, dayCount);
+                    const schedule = getScheduleForDate(currentDate);
+
+                    // Draw team schedules
+                    let offsetY = 35;
+                    const teamHeight = (cellHeight - 40) / teams.length;
+
+                    teams.forEach((team, idx) => {
+                        const shift = schedule[team].shift;
+                        const teamY = y + offsetY + idx * teamHeight;
+
+                        // Background color
+                        let bgColor = '#e2e8f0';
+                        if (shift === '0000-0800') bgColor = '#4a5568';
+                        else if (shift === '0800-1600') bgColor = '#48bb78';
+                        else if (shift === '1600-0000') bgColor = '#ed8936';
+
+                        ctx.fillStyle = bgColor;
+                        ctx.fillRect(x + 4, teamY, cellWidth - 8, teamHeight - 2);
+
+                        // Team name and shift
+                        ctx.fillStyle = (shift === 'off' || shift === 'rest') ? '#4a5568' : '#ffffff';
+                        ctx.font = 'bold 11px Arial';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(team, x + 8, teamY + 14);
+
+                        ctx.font = '9px Arial';
+                        const shiftText = shift === 'off' ? 'Off' : shift === 'rest' ? 'Rest' : (shiftNames[shift] || shift);
+                        ctx.fillText(shiftText, x + 8, teamY + 26);
+                    });
+
+                    dayCount++;
+                }
+            }
+
             return canvas;
         }
 
-        async function downloadScheduleImagesForSelectedMonths() {
-            const monthsToDownload = getVisibleMonths();
-            if (monthsToDownload.length === 0) {
-                alert('No months selected to download.');
-                return;
+        function downloadCanvas(canvas, filename) {
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        // Preview modal controls
+        document.getElementById('closePreviewBtn').addEventListener('click', () => {
+            document.getElementById('previewModal').classList.remove('open');
+        });
+
+        document.getElementById('backToSelectBtn').addEventListener('click', () => {
+            document.getElementById('previewModal').classList.remove('open');
+            openDownloadModal();
+        });
+
+        document.getElementById('downloadAllBtn').addEventListener('click', () => {
+            const items = document.querySelectorAll('.preview-item canvas');
+            items.forEach((canvas, idx) => {
+                setTimeout(() => {
+                    const monthVal = downloadSelectedMonths[idx];
+                    downloadCanvas(canvas, `schedule-${monthVal}.png`);
+                }, idx * 200);
+            });
+        });
+
+        document.getElementById('previewModal').addEventListener('click', (e) => {
+            if (e.target.id === 'previewModal') {
+                document.getElementById('previewModal').classList.remove('open');
             }
-            
-            const teamsToShow = selectedTeams.length ? selectedTeams : [...teams];
-            
-            // Detect if mobile device
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            
-            // Show spinner overlay
-            const spinnerOverlay = document.getElementById('spinnerOverlay');
-            spinnerOverlay.classList.add('active');
-            document.getElementById('spinnerTotal').textContent = monthsToDownload.length;
-            
-            // Disable close button during download
-            document.getElementById('modalCloseBtn').disabled = true;
-            
-            for (let i = 0; i < monthsToDownload.length; i++) {
-                const m = monthsToDownload[i];
-                
-                // Update progress
-                document.getElementById('spinnerProgress').textContent = i + 1;
-                
-                try {
-                    const canvas = await drawCalendarToCanvas(m, currentYear, teamsToShow);
-                    const monthLabel = getMonthNameForFile(m, currentYear);
-                    const filename = `${getTeamsFilenameSegment()}_${monthLabel}_${currentYear}.png`;
-                    
-                    if (isMobile && navigator.share) {
-                        // For mobile: use Web Share API
-                        await new Promise((resolve, reject) => {
-                            canvas.toBlob(async (blob) => {
-                                if (!blob) {
-                                    console.warn('Export failed for month', m);
-                                    resolve();
-                                    return;
-                                }
-                                
-                                try {
-                                    const file = new File([blob], filename, { type: 'image/png' });
-                                    await navigator.share({
-                                        files: [file],
-                                        title: filename,
-                                        text: `Schedule for ${monthLabel} ${currentYear}`
-                                    });
-                                    resolve();
-                                } catch (err) {
-                                    if (err.name === 'AbortError') {
-                                        // User cancelled share - not an error
-                                        console.log('Share cancelled by user');
-                                } else {
-                                    console.error('Share failed:', err);
-                                }
-                                resolve();
-                                }
-                            }, 'image/png', 1);
-                        });
-                        
-                        // Add delay between shares on mobile
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    } else {
-                        // For desktop or mobile without share support: use blob download
-                        await new Promise((resolve) => {
-                            canvas.toBlob((blob) => {
-                                if (!blob) {
-                                    console.warn('Export failed for month', m);
-                                    resolve();
-                                    return;
-                                }
-                                const a = document.createElement('a');
-                                a.href = URL.createObjectURL(blob);
-                                a.download = filename;
-                                document.body.appendChild(a);
-                                a.click();
-                                a.remove();
-                                setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-                                resolve();
-                            }, 'image/png', 1);
-                        });
-                    }
-                } catch (err) {
-                    console.error('Export failed for month', m, err);
+        });
+
+        function updateConfirmButtonState() {
+            // Enable confirm button only if at least one team AND one month selected
+            const hasTeams = downloadSelectedTeams.length > 0;
+            const hasMonths = downloadSelectedMonths.length > 0;
+            confirmDownloadBtn.disabled = !(hasTeams && hasMonths);
+        }
+
+        function updateDownloadSummary() {
+            const summaryTeam = document.getElementById('downloadSummaryTeam');
+            const summaryMonth = document.getElementById('downloadSummaryMonth');
+
+            // Team summary
+            if (downloadSelectedTeams.length === 0) {
+                summaryTeam.textContent = 'Team: None';
+            } else if (downloadSelectedTeams.length === teams.length) {
+                summaryTeam.textContent = 'Team: All teams';
+            } else {
+                summaryTeam.textContent = `Team: ${downloadSelectedTeams.join(', ')}`;
+            }
+
+            // Month summary
+            if (downloadSelectedMonths.length === 0) {
+                summaryMonth.textContent = 'Month: None';
+            } else {
+                const monthLabels = downloadSelectedMonths.map(val => {
+                    const [year, month] = val.split('-');
+                    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+                    return date.toLocaleString('en-US', { month: 'short' });
+                });
+
+                if (downloadSelectedMonths.length === 12) {
+                    summaryMonth.textContent = 'Month: All months';
+                } else {
+                    summaryMonth.textContent = `Month: ${monthLabels.join(', ')}`;
                 }
             }
-            
-            // Hide spinner overlay
-            spinnerOverlay.classList.remove('active');
-            
-            // Re-enable close button after download completes
-            document.getElementById('modalCloseBtn').disabled = false;
-            
-            // Auto-close modal after all downloads complete
-            closeDownloadModal();
         }
+    </script>
+</body>
 
-        // Replace the download functions with custom canvas drawing:
-
-        // Show confirmation modal before starting downloads
-        function formatTeamsForModal() {
-            return (selectedTeams.length ? selectedTeams : teams).join(', ');
-        }
-        function formatMonthsForModal() {
-            const months = selectedMonths.length ? selectedMonths : Array.from({length:12}, (_,i) => i);
-            return months.map(m => new Date(2026, m, 1).toLocaleString('en-US', { month: 'long' })).join(', ');
-        }
-
-       // filename helpers: TeamA-TeamB_Month_Year
-       function getTeamsFilenameSegment() {
-           const list = selectedTeams.length ? selectedTeams : teams;
-           return list.join('-');
-       }
-       function getMonthNameForFile(m, y) {
-           return new Date(y, m, 1).toLocaleString('en-US', { month: 'long' }).replace(/\s+/g, '_');
-       }
-
-        function showDownloadModal(e) {
-            e?.stopPropagation();
-            document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
-            setTimeout(updateHeaderHeight, 0);
-            document.getElementById('modalTeams').textContent = formatTeamsForModal();
-            document.getElementById('modalMonths').textContent = formatMonthsForModal();
-            
-            // Reset modal to confirmation view
-            document.getElementById('modalCloseBtn').disabled = false;
-            
-            const modal = document.getElementById('downloadModal');
-            modal.classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-        
-        function closeDownloadModal() {
-            const modal = document.getElementById('downloadModal');
-            modal.classList.remove('open');
-            document.body.style.overflow = '';
-        }
-
-        document.getElementById('downloadBtn').addEventListener('click', showDownloadModal);
-        document.getElementById('cancelDownloadBtn').addEventListener('click', closeDownloadModal);
-        document.getElementById('modalCloseBtn').addEventListener('click', closeDownloadModal);
-        document.getElementById('downloadBackdrop').addEventListener('click', (e) => {
-            // Backdrop click disabled - only X button can close
-        });
-        document.getElementById('confirmDownloadBtn').addEventListener('click', async () => {
-            await downloadScheduleImagesForSelectedMonths();
-        });
-     </script>
- </body>
 </html>
