@@ -1063,6 +1063,9 @@
             
             const teamsToShow = selectedTeams.length ? selectedTeams : [...teams];
             
+            // Detect if mobile device
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
             // Show spinner overlay
             const spinnerOverlay = document.getElementById('spinnerOverlay');
             spinnerOverlay.classList.add('active');
@@ -1079,28 +1082,68 @@
                 
                 try {
                     const canvas = await drawCalendarToCanvas(m, currentYear, teamsToShow);
+                    const monthLabel = getMonthNameForFile(m, currentYear);
+                    const filename = `${getTeamsFilenameSegment()}_${monthLabel}_${currentYear}.png`;
                     
-                    await new Promise((resolve) => {
-                        canvas.toBlob((blob) => {
-                            if (!blob) {
-                                console.warn('Export failed for month', m);
+                    if (isMobile) {
+                        // For mobile: convert to data URL and open in new tab
+                        // User can then long-press to save image
+                        const dataUrl = canvas.toDataURL('image/png', 1.0);
+                        const newWindow = window.open();
+                        if (newWindow) {
+                            newWindow.document.write(`
+                                <html>
+                                    <head>
+                                        <title>${filename}</title>
+                                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                                        <style>
+                                            body { margin: 0; padding: 20px; background: #f0f0f0; }
+                                            img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+                                            .instructions { 
+                                                text-align: center; 
+                                                padding: 10px; 
+                                                background: white; 
+                                                margin-bottom: 20px;
+                                                border-radius: 8px;
+                                            }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div class="instructions">
+                                            <p><strong>${filename}</strong></p>
+                                            <p>Long press on image to save</p>
+                                        </div>
+                                        <img src="${dataUrl}" alt="${filename}">
+                                    </body>
+                                </html>
+                            `);
+                            newWindow.document.close();
+                        }
+                        // Add delay between opening tabs on mobile
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } else {
+                        // For desktop: use blob download
+                        await new Promise((resolve) => {
+                            canvas.toBlob((blob) => {
+                                if (!blob) {
+                                    console.warn('Export failed for month', m);
+                                    resolve();
+                                    return;
+                                }
+                                const a = document.createElement('a');
+                                a.href = URL.createObjectURL(blob);
+                                a.download = filename;
+                                document.body.appendChild(a);
+                                a.click();
+                                a.remove();
+                                setTimeout(() => URL.revokeObjectURL(a.href), 10000);
                                 resolve();
-                                return;
-                            }
-                            const a = document.createElement('a');
-                            const monthLabel = getMonthNameForFile(m, currentYear);
-                            a.href = URL.createObjectURL(blob);
-                            a.download = `${getTeamsFilenameSegment()}_${monthLabel}_${currentYear}.png`;
-                            document.body.appendChild(a);
-                            a.click();
-                            a.remove();
-                            setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-                            resolve();
-                        }, 'image/png', 1);
-                     });
-                  } catch (err) {
-                     console.error('Export failed for month', m, err);
-                  }
+                            }, 'image/png', 1);
+                        });
+                    }
+                } catch (err) {
+                    console.error('Export failed for month', m, err);
+                }
             }
             
             // Hide spinner overlay
@@ -1111,6 +1154,13 @@
             
             // Auto-close modal after all downloads complete
             closeDownloadModal();
+            
+            // Show additional message for mobile users
+            if (isMobile && monthsToDownload.length > 0) {
+                setTimeout(() => {
+                    alert('Images opened in new tabs. Long press each image to save to your device.');
+                }, 500);
+            }
         }
 
         // Replace the download functions with custom canvas drawing:
