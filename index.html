@@ -1085,44 +1085,40 @@
                     const monthLabel = getMonthNameForFile(m, currentYear);
                     const filename = `${getTeamsFilenameSegment()}_${monthLabel}_${currentYear}.png`;
                     
-                    if (isMobile) {
-                        // For mobile: convert to data URL and open in new tab
-                        // User can then long-press to save image
-                        const dataUrl = canvas.toDataURL('image/png', 1.0);
-                        const newWindow = window.open();
-                        if (newWindow) {
-                            newWindow.document.write(`
-                                <html>
-                                    <head>
-                                        <title>${filename}</title>
-                                        <meta name="viewport" content="width=device-width, initial-scale=1">
-                                        <style>
-                                            body { margin: 0; padding: 20px; background: #f0f0f0; }
-                                            img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
-                                            .instructions { 
-                                                text-align: center; 
-                                                padding: 10px; 
-                                                background: white; 
-                                                margin-bottom: 20px;
-                                                border-radius: 8px;
-                                            }
-                                        </style>
-                                    </head>
-                                    <body>
-                                        <div class="instructions">
-                                            <p><strong>${filename}</strong></p>
-                                            <p>Long press on image to save</p>
-                                        </div>
-                                        <img src="${dataUrl}" alt="${filename}">
-                                    </body>
-                                </html>
-                            `);
-                            newWindow.document.close();
-                        }
-                        // Add delay between opening tabs on mobile
+                    if (isMobile && navigator.share) {
+                        // For mobile: use Web Share API
+                        await new Promise((resolve, reject) => {
+                            canvas.toBlob(async (blob) => {
+                                if (!blob) {
+                                    console.warn('Export failed for month', m);
+                                    resolve();
+                                    return;
+                                }
+                                
+                                try {
+                                    const file = new File([blob], filename, { type: 'image/png' });
+                                    await navigator.share({
+                                        files: [file],
+                                        title: filename,
+                                        text: `Schedule for ${monthLabel} ${currentYear}`
+                                    });
+                                    resolve();
+                                } catch (err) {
+                                    if (err.name === 'AbortError') {
+                                        // User cancelled share - not an error
+                                        console.log('Share cancelled by user');
+                                } else {
+                                    console.error('Share failed:', err);
+                                }
+                                resolve();
+                                }
+                            }, 'image/png', 1);
+                        });
+                        
+                        // Add delay between shares on mobile
                         await new Promise(resolve => setTimeout(resolve, 500));
                     } else {
-                        // For desktop: use blob download
+                        // For desktop or mobile without share support: use blob download
                         await new Promise((resolve) => {
                             canvas.toBlob((blob) => {
                                 if (!blob) {
