@@ -5,22 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SHIFT SCHEDULE 2026</title>
     <style>
-        :root { --header-height: 64px; }
+            :root { --header-height: 64px; }
 
-        /* make header sticky */
+        /* header layout: left = nav, center = filters, right = download */
         .header {
             position: sticky;
             top: 0;
             z-index: 40;
-            background: white; /* so it covers content when sticky */
-            display: flex;
-            align-items: center; /* center all children on y-axis */
-            box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.05);
-            justify-content: space-between;
+            background: white;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
             gap: 1rem;
-            flex-wrap: wrap;
             padding: 1rem 0;
+            box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.05);
+            flex-wrap: nowrap;
         }
+
+        /* left navigation group */
+        .navigation {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-left: 0.25rem;
+        }
+
+        /* center filters - keep centered in header */
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            justify-self: center;
+            height: 100%;
+        }
+
+        /* right download area */
+        .download-area {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.25rem;
+        }
+
+        .download-button {
+            padding: 0.45rem 0.8rem;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 700;
+            transition: background 0.2s;
+        }
+        .download-button:hover { background: #059669; }
 
         /* keep calendar columns aligned and weekday header sticky below .header */
         .calendar {
@@ -62,19 +100,35 @@
             padding: 0 1.5rem 1.5rem 1.5rem;
         }
 
-        .navigation {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
+        .nav-button {
+            padding: 0.45rem 0.6rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.3s;
         }
 
-        .filters {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-            height: 100%; /* let the filters fill header height for proper centering */
+        .nav-button:hover {
+            background: #5568d3;
         }
+
+        .nav-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .month-year {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            min-width: 10rem;
+        }
+
         /* Dropdown filter styles */
         .dropdown {
             position: relative;
@@ -133,35 +187,6 @@
             background: #2b6cb0;
             border-color: #2b6cb0;
             color: #fff; /* show check in white when selected */
-        }
-
-        .nav-button {
-            padding: 0.45rem 0.6rem;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-
-        .nav-button:hover {
-            background: #5568d3;
-        }
-
-        .nav-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .month-year {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #333;
-            text-align: center;
-            flex: 1;
         }
 
         .calendar {
@@ -244,11 +269,11 @@
         /* Responsive design */
         @media (max-width: 48rem) {
             .month-year {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
             }
 
             .nav-button {
-                padding: 0.5rem 1rem;
+                padding: 0.5rem 0.8rem;
                 font-size: 0.9rem;
             }
 
@@ -276,6 +301,7 @@
             .shift-time {
                 font-size: 0.6rem;
             }
+            .download-button { padding: 0.35rem 0.6rem; font-size: 0.85rem; }
         }
 
         @media (max-width: 30rem) {
@@ -283,11 +309,14 @@
                 padding: 0.75rem;
             }
 
-            .navigation {
+            /* stack header groups on very small screens */
+            .header {
+                display: flex;
                 flex-direction: column;
                 gap: 0.5rem;
+                align-items: stretch;
             }
-
+            .navigation, .filters, .download-area { justify-content: center; padding: 0; }
             .team-schedule {
                 font-size: 0.55rem;
                 padding: 0.15rem;
@@ -297,17 +326,161 @@
                 font-size: 0.5rem;
             }
         }
-    </style>
+
+        /* Modal: download confirmation */
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 60;
+        }
+        .modal.open { display: flex; }
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(1px);
+        }
+        .modal-content {
+            position: relative;
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            max-width: 28rem;
+            width: calc(100% - 2rem);
+            box-shadow: 0 1rem 3rem rgba(0,0,0,0.35);
+            z-index: 65;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .modal-content h3 { 
+            margin: 0;
+            font-size: 1.05rem; 
+        }
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        .modal-close:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        .modal-close:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .modal-body { color: #111827; font-size: 0.95rem; margin-bottom: 0.75rem; }
+        
+        /* Loading spinner */
+        .modal-loading {
+            display: none;
+            text-align: center;
+            padding: 2rem 1rem;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-loading.active { display: flex; }
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal-loading p {
+            margin: 0;
+            color: #4b5563;
+            font-size: 0.95rem;
+        }
+        .modal-confirm, .modal-actions {
+            display: block;
+        }
+        .modal-confirm.hidden, .modal-actions.hidden {
+            display: none;
+        }
+
+        /* Loading spinner overlay - above modal */
+    .spinner-overlay {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 70;
+        background: rgba(0, 0, 0, 0.3);
+    }
+    .spinner-overlay.active { display: flex; }
+    .spinner-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 1rem 3rem rgba(0,0,0,0.35);
+        text-align: center;
+        min-width: 300px;
+    }
+    .spinner {
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .spinner-overlay p {
+        margin: 0;
+        color: #4b5563;
+        font-size: 0.95rem;
+    }
+    
+    /* Modal loading view - hidden now */
+    .modal-loading {
+        display: none;
+    }
+        </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="navigation">
+            <!-- left: prev, current month, next -->
+            <div class="navigation" aria-label="month navigation">
                 <button class="nav-button" id="prevBtn" onclick="changeMonth(-1)"></button>
                 <div class="month-year" id="monthYear"></div>
                 <button class="nav-button" id="nextBtn" onclick="changeMonth(1)"></button>
             </div>
-            <div class="filters">
+
+            <!-- center: filters -->
+            <div class="filters" role="region" aria-label="filters">
                 <div class="dropdown" id="teamDropdown">
                     <button class="dropdown-button" id="teamDropdownBtn">Select Teams</button>
                     <div class="dropdown-menu" id="teamDropdownMenu"></div>
@@ -316,6 +489,42 @@
                 <div class="dropdown" id="monthDropdown">
                     <button class="dropdown-button" id="monthDropdownBtn">Select Months</button>
                     <div class="dropdown-menu" id="monthDropdownMenu"></div>
+                </div>
+            </div>
+
+            <!-- right: download -->
+            <div class="download-area">
+                <button id="downloadBtn" class="download-button" title="Download schedule as image">Download</button>
+            </div>
+        </div>
+
+        <!-- Spinner overlay - appears above modal -->
+        <div id="spinnerOverlay" class="spinner-overlay">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+                <p>Generating <span id="spinnerProgress">0</span> of <span id="spinnerTotal">0</span> calendars...</p>
+            </div>
+        </div>
+
+        <!-- Download confirmation modal -->
+        <div id="downloadModal" class="modal" aria-hidden="true">
+            <div id="downloadBackdrop" class="modal-backdrop" tabindex="-1"></div>
+            <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="downloadModalTitle">
+                <div class="modal-header">
+                    <h3 id="downloadModalTitle">Confirm Download</h3>
+                    <button id="modalCloseBtn" class="modal-close" aria-label="Close modal">×</button>
+                </div>
+                
+                <!-- Confirmation view -->
+                <div class="modal-confirm" id="modalConfirm">
+                    <div class="modal-body">
+                        <div><strong>Teams:</strong> <span id="modalTeams"></span></div>
+                        <div style="margin-top:0.5rem"><strong>Months:</strong> <span id="modalMonths"></span></div>
+                    </div>
+                    <div class="modal-actions">
+                        <button id="cancelDownloadBtn" class="nav-button">Cancel</button>
+                        <button id="confirmDownloadBtn" class="download-button">Confirm</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -420,19 +629,19 @@
 
         // Generate calendar for the current month
         function getVisibleMonths() {
-            const months = selectedMonths.length ? selectedMonths.slice() : Array.from({ length: 12 }, (_, i) => i);
-            months.sort((a, b) => a - b);
-            return months;
-        }
-         function generateCalendar() {
-             const calendar = document.getElementById('calendar');
-             const monthYear = document.getElementById('monthYear');
-             const prevBtn = document.getElementById('prevBtn');
-             const nextBtn = document.getElementById('nextBtn');
+             const months = selectedMonths.length ? selectedMonths.slice() : Array.from({ length: 12 }, (_, i) => i);
+             months.sort((a, b) => a - b);
+             return months;
+         }
+         function generateCalendar(root = document) {
+             const calendar = root.querySelector('#calendar');
+             const monthYear = root.querySelector('#monthYear');
+             const prevBtn = root.querySelector('#prevBtn');
+             const nextBtn = root.querySelector('#nextBtn');
              
             // treat empty selection as "select all" for rendering
-            const teamsToShow = selectedTeams.length ? selectedTeams : [...teams];
-            const monthsToShow = getVisibleMonths();
+             const teamsToShow = selectedTeams.length ? selectedTeams : [...teams];
+             const monthsToShow = getVisibleMonths();
 
             // if no months selected, show nothing and disable nav
             if (monthsToShow.length === 0) {
@@ -684,6 +893,276 @@
         generateCalendar();
         // initial header height calc
         setTimeout(updateHeaderHeight, 0);
+
+        // --- Custom Calendar Image Generation ---
+        async function drawCalendarToCanvas(month, year, teamsToShow) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Scale factor for high quality export
+            const scale = 4;
+            
+            // Colors
+            const colors = {
+                background: '#ffffff',
+                header: '#667eea',
+                headerText: '#ffffff',
+                gridLine: '#dddddd',
+                dayNumber: '#333333',
+                '0000-0800': { bg: '#4a5568', text: '#ffffff' },
+                '0800-1600': { bg: '#48bb78', text: '#ffffff' },
+                '1600-0000': { bg: '#ed8936', text: '#ffffff' },
+                'off': { bg: '#e2e8f0', text: '#4a5568' },
+                'rest': { bg: '#e2e8f0', text: '#4a5568' }
+            };
+            
+            // Calculate minimum column width based on content (base size)
+            ctx.font = 'bold 32px Arial';
+            let maxTextWidth = 0;
+            
+            // Check team names
+            teamsToShow.forEach(team => {
+                const width = ctx.measureText(team).width;
+                if (width > maxTextWidth) maxTextWidth = width;
+            });
+            
+            // Check shift names
+            ctx.font = '24px Arial';
+            Object.values(shiftNames).forEach(shift => {
+                const width = ctx.measureText(shift).width;
+                if (width > maxTextWidth) maxTextWidth = width;
+            });
+            const offWidth = ctx.measureText('Off Day').width;
+            const restWidth = ctx.measureText('Rest Day').width;
+            if (offWidth > maxTextWidth) maxTextWidth = offWidth;
+            if (restWidth > maxTextWidth) maxTextWidth = restWidth;
+            
+            // Base dimensions
+            const baseCellWidth = Math.max(maxTextWidth + 80, 200);
+            const baseWidth = baseCellWidth * 7;
+            const baseHeight = 1800;
+            
+            // Apply scale for high resolution
+            const cellWidth = baseCellWidth * scale;
+            const width = baseWidth * scale;
+            const height = baseHeight * scale;
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Scale context for all operations
+            ctx.scale(scale, scale);
+            
+            // Fill background
+            ctx.fillStyle = colors.background;
+            ctx.fillRect(0, 0, baseWidth, baseHeight);
+            
+            // Draw title
+            const monthName = new Date(year, month, 1).toLocaleString('en-US', { month: 'long' });
+            ctx.fillStyle = colors.header;
+            ctx.fillRect(0, 0, baseWidth, 100);
+            ctx.fillStyle = colors.headerText;
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${monthName} ${year}`, baseWidth / 2, 50);
+            
+            // Draw weekday headers
+            const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const headerY = 100;
+            const headerHeight = 60;
+            
+            ctx.fillStyle = colors.header;
+            ctx.fillRect(0, headerY, baseWidth, headerHeight);
+            ctx.fillStyle = colors.headerText;
+            ctx.font = 'bold 28px Arial';
+            
+            for (let i = 0; i < 7; i++) {
+                ctx.fillText(daysOfWeek[i], baseCellWidth * i + baseCellWidth / 2, headerY + headerHeight / 2);
+            }
+            
+            // Calculate calendar layout
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const rowCount = Math.ceil((firstDay + daysInMonth) / 7);
+            const cellHeight = (baseHeight - headerY - headerHeight) / rowCount;
+            
+            // Draw grid and days
+            let dayCount = 1;
+            for (let row = 0; row < rowCount; row++) {
+                for (let col = 0; col < 7; col++) {
+                    const x = col * baseCellWidth;
+                    const y = headerY + headerHeight + row * cellHeight;
+                    
+                    // Draw cell border
+                    ctx.strokeStyle = colors.gridLine;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, baseCellWidth, cellHeight);
+                    
+                    // Draw day content
+                    if (row === 0 && col < firstDay) {
+                        // Empty cell before month starts
+                        continue;
+                    } else if (dayCount > daysInMonth) {
+                        // Empty cell after month ends
+                        continue;
+                    } else {
+                        const currentDate = new Date(year, month, dayCount);
+                        const schedule = getScheduleForDate(currentDate);
+                        
+                        // Draw day number
+                        ctx.fillStyle = colors.dayNumber;
+                        ctx.font = 'bold 44px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(dayCount, x + baseCellWidth / 2, y + 50);
+                        
+                        // Draw team schedules
+                        const teamHeight = (cellHeight - 70) / teamsToShow.length;
+                        teamsToShow.forEach((team, idx) => {
+                            const teamY = y + 70 + idx * teamHeight;
+                            const shift = schedule[team].shift;
+                            const color = colors[shift] || colors['off'];
+                            
+                            // Draw team background
+                            ctx.fillStyle = color.bg;
+                            ctx.fillRect(x + 10, teamY + 5, baseCellWidth - 20, teamHeight - 10);
+                            
+                            // Draw team name
+                            ctx.fillStyle = color.text;
+                            ctx.font = 'bold 32px Arial';
+                            ctx.textAlign = 'left';
+                            ctx.fillText(team, x + 20, teamY + teamHeight / 3);
+                            
+                            // Draw shift info
+                            ctx.font = '24px Arial';
+                            const shiftText = shift === 'off' ? 'Off Day' :
+                                            shift === 'rest' ? 'Rest Day' :
+                                            shiftNames[shift] || shift;
+                            ctx.fillText(shiftText, x + 20, teamY + teamHeight / 3 + 35);
+                            
+                            // Draw day in cycle
+                            if (shift !== 'off' && shift !== 'rest') {
+                                ctx.fillText(`Day ${schedule[team].dayInCycle}`, x + 20, teamY + teamHeight / 3 + 65);
+                            }
+                        });
+                        
+                        dayCount++;
+                    }
+                }
+            }
+            
+            return canvas;
+        }
+
+        async function downloadScheduleImagesForSelectedMonths() {
+            const monthsToDownload = getVisibleMonths();
+            if (monthsToDownload.length === 0) {
+                alert('No months selected to download.');
+                return;
+            }
+            
+            const teamsToShow = selectedTeams.length ? selectedTeams : [...teams];
+            
+            // Show spinner overlay
+            const spinnerOverlay = document.getElementById('spinnerOverlay');
+            spinnerOverlay.classList.add('active');
+            document.getElementById('spinnerTotal').textContent = monthsToDownload.length;
+            
+            // Disable close button during download
+            document.getElementById('modalCloseBtn').disabled = true;
+            
+            for (let i = 0; i < monthsToDownload.length; i++) {
+                const m = monthsToDownload[i];
+                
+                // Update progress
+                document.getElementById('spinnerProgress').textContent = i + 1;
+                
+                try {
+                    const canvas = await drawCalendarToCanvas(m, currentYear, teamsToShow);
+                    
+                    await new Promise((resolve) => {
+                        canvas.toBlob((blob) => {
+                            if (!blob) {
+                                console.warn('Export failed for month', m);
+                                resolve();
+                                return;
+                            }
+                            const a = document.createElement('a');
+                            const monthLabel = getMonthNameForFile(m, currentYear);
+                            a.href = URL.createObjectURL(blob);
+                            a.download = `${getTeamsFilenameSegment()}_${monthLabel}_${currentYear}.png`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+                            resolve();
+                        }, 'image/png', 1);
+                     });
+                  } catch (err) {
+                     console.error('Export failed for month', m, err);
+                  }
+            }
+            
+            // Hide spinner overlay
+            spinnerOverlay.classList.remove('active');
+            
+            // Re-enable close button after download completes
+            document.getElementById('modalCloseBtn').disabled = false;
+            
+            // Auto-close modal after all downloads complete
+            closeDownloadModal();
+        }
+
+        // Replace the download functions with custom canvas drawing:
+
+        // Show confirmation modal before starting downloads
+        function formatTeamsForModal() {
+            return (selectedTeams.length ? selectedTeams : teams).join(', ');
+        }
+        function formatMonthsForModal() {
+            const months = selectedMonths.length ? selectedMonths : Array.from({length:12}, (_,i) => i);
+            return months.map(m => new Date(2026, m, 1).toLocaleString('en-US', { month: 'long' })).join(', ');
+        }
+
+       // filename helpers: TeamA-TeamB_Month_Year
+       function getTeamsFilenameSegment() {
+           const list = selectedTeams.length ? selectedTeams : teams;
+           return list.join('-');
+       }
+       function getMonthNameForFile(m, y) {
+           return new Date(y, m, 1).toLocaleString('en-US', { month: 'long' }).replace(/\s+/g, '_');
+       }
+
+        function showDownloadModal(e) {
+            e?.stopPropagation();
+            document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
+            setTimeout(updateHeaderHeight, 0);
+            document.getElementById('modalTeams').textContent = formatTeamsForModal();
+            document.getElementById('modalMonths').textContent = formatMonthsForModal();
+            
+            // Reset modal to confirmation view
+            document.getElementById('modalCloseBtn').disabled = false;
+            
+            const modal = document.getElementById('downloadModal');
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeDownloadModal() {
+            const modal = document.getElementById('downloadModal');
+            modal.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', showDownloadModal);
+        document.getElementById('cancelDownloadBtn').addEventListener('click', closeDownloadModal);
+        document.getElementById('modalCloseBtn').addEventListener('click', closeDownloadModal);
+        document.getElementById('downloadBackdrop').addEventListener('click', (e) => {
+            // Backdrop click disabled - only X button can close
+        });
+        document.getElementById('confirmDownloadBtn').addEventListener('click', async () => {
+            await downloadScheduleImagesForSelectedMonths();
+        });
      </script>
  </body>
- </html>
+</html>
