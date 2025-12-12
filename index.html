@@ -1053,7 +1053,43 @@
             
             return canvas;
         }
+if (isMobile) {
+    // Try Web Share API first
+    if (navigator.share && navigator.canShare) {
+        canvas.toBlob(async (blob) => {
+            if (! blob) return;
+            const file = new File([blob], filename, { type: 'image/png' });
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: 'Shift Schedule',
+                });
+            } catch (err) {
+                // Fallback to download if share fails
+                downloadViaLink(blob, filename);
+            }
+        }, 'image/png');
+    } else {
+        // Fallback:  direct download
+        canvas.toBlob((blob) => {
+            if (! blob) return;
+            downloadViaLink(blob, filename);
+        }, 'image/png');
+    }
+}
 
+function downloadViaLink(blob, filename) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    }, 100);
+}
         async function downloadScheduleImagesForSelectedMonths() {
             const monthsToDownload = getVisibleMonths();
             if (monthsToDownload.length === 0) {
@@ -1150,13 +1186,6 @@
             
             // Auto-close modal after all downloads complete
             closeDownloadModal();
-            
-            // Show additional message for mobile users
-            if (isMobile && monthsToDownload.length > 0) {
-                setTimeout(() => {
-                    alert('Images opened in new tabs. Long press each image to save to your device.');
-                }, 500);
-            }
         }
 
         // Replace the download functions with custom canvas drawing:
