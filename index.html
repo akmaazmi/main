@@ -1053,7 +1053,26 @@
             
             return canvas;
         }
-
+function saveCanvasAsPng(canvas, filename = 'schedule.png') {
+  // dipanggil dari onclick handler
+  canvas.toBlob(function(blob) {
+    if (!blob || blob.size === 0) {
+      console.error('Blob kosong — rendering gagal');
+      alert('Gagal menghasilkan imej.');
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename.endsWith('.png') ? filename : filename + '.png';
+    // Some browsers require element appended to DOM before click
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // revoke selepas delay
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }, 'image/png', 0.92);
+}
         async function downloadScheduleImagesForSelectedMonths() {
             const monthsToDownload = getVisibleMonths();
             if (monthsToDownload.length === 0) {
