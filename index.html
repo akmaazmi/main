@@ -1150,13 +1150,6 @@
             
             // Auto-close modal after all downloads complete
             closeDownloadModal();
-            
-            // Show additional message for mobile users
-            if (isMobile && monthsToDownload.length > 0) {
-                setTimeout(() => {
-                    alert('Images opened in new tabs. Long press each image to save to your device.');
-                }, 500);
-            }
         }
 
         // Replace the download functions with custom canvas drawing:
