@@ -1053,25 +1053,42 @@
             
             return canvas;
         }
-function saveCanvasAsPng(canvas, filename = 'schedule.png') {
-  // dipanggil dari onclick handler
-  canvas.toBlob(function(blob) {
-    if (!blob || blob.size === 0) {
-      console.error('Blob kosong — rendering gagal');
-      alert('Gagal menghasilkan imej.');
-      return;
+if (isMobile) {
+    // Try Web Share API first
+    if (navigator.share && navigator.canShare) {
+        canvas.toBlob(async (blob) => {
+            if (! blob) return;
+            const file = new File([blob], filename, { type: 'image/png' });
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: 'Shift Schedule',
+                });
+            } catch (err) {
+                // Fallback to download if share fails
+                downloadViaLink(blob, filename);
+            }
+        }, 'image/png');
+    } else {
+        // Fallback:  direct download
+        canvas.toBlob((blob) => {
+            if (! blob) return;
+            downloadViaLink(blob, filename);
+        }, 'image/png');
     }
-    const url = URL.createObjectURL(blob);
+}
+
+function downloadViaLink(blob, filename) {
     const a = document.createElement('a');
-    a.href = url;
-    a.download = filename.endsWith('.png') ? filename : filename + '.png';
-    // Some browsers require element appended to DOM before click
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
-    a.remove();
-    // revoke selepas delay
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
-  }, 'image/png', 0.92);
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    }, 100);
 }
         async function downloadScheduleImagesForSelectedMonths() {
             const monthsToDownload = getVisibleMonths();
@@ -1169,13 +1186,6 @@ function saveCanvasAsPng(canvas, filename = 'schedule.png') {
             
             // Auto-close modal after all downloads complete
             closeDownloadModal();
-            
-            // Show additional message for mobile users
-            if (isMobile && monthsToDownload.length > 0) {
-                setTimeout(() => {
-                    alert('Images opened in new tabs. Long press each image to save to your device.');
-                }, 500);
-            }
         }
 
         // Replace the download functions with custom canvas drawing:
