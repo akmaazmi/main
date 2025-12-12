@@ -297,6 +297,10 @@
                 font-size: 0.95rem;
             }
 
+            .preview-instruction {
+                font-size: 0.8rem;
+            }
+
             .download-summary-row {
                 font-size: 0.85rem;
             }
@@ -375,6 +379,10 @@
                 font-size: 0.9rem;
             }
 
+            .preview-instruction {
+                font-size: 0.75rem;
+            }
+
             .download-summary-row {
                 font-size: 0.8rem;
                 padding-left: 0.15rem;
@@ -424,6 +432,10 @@
 
             .modal-title {
                 font-size: 0.85rem;
+            }
+
+            .preview-instruction {
+                font-size: 0.7rem;
             }
 
             .download-summary-row {
@@ -657,6 +669,13 @@
             border-bottom: 1px solid #e5e7eb;
         }
 
+        .preview-instruction {
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: normal;
+        }
+
         .preview-modal-body {
             flex: 1;
             overflow-y: auto;
@@ -722,6 +741,10 @@
 
             .modal-title {
                 font-size: 0.95rem;
+            }
+
+            .preview-instruction {
+                font-size: 0.8rem;
             }
 
             .download-summary-row {
@@ -802,6 +825,10 @@
                 font-size: 0.9rem;
             }
 
+            .preview-instruction {
+                font-size: 0.75rem;
+            }
+
             .download-summary-row {
                 font-size: 0.8rem;
                 padding-left: 0.15rem;
@@ -851,6 +878,10 @@
 
             .modal-title {
                 font-size: 0.85rem;
+            }
+
+            .preview-instruction {
+                font-size: 0.7rem;
             }
 
             .download-summary-row {
@@ -940,15 +971,16 @@
         <div class="preview-modal-backdrop" id="previewModal">
             <div class="preview-modal">
                 <div class="preview-modal-header">
-                    <div class="modal-title">Preview Calendar Images</div>
-                    <button class="btn btn-ghost" id="closePreviewBtn">✕</button>
+                    <div>
+                        <div class="modal-title">Preview Calendar Images</div>
+                        <div class="preview-instruction">Click on any calendar image to download it automatically</div>
+                    </div>
                 </div>
                 <div class="preview-modal-body">
                     <div class="preview-grid" id="previewGrid"></div>
                 </div>
                 <div class="preview-modal-footer">
                     <button class="btn btn-secondary" id="backToSelectBtn">Back</button>
-                    <button class="btn btn-primary" id="downloadAllBtn">Download All</button>
                 </div>
             </div>
         </div>
@@ -1384,7 +1416,12 @@
 
             previewGrid.innerHTML = '';
 
-            months.forEach(monthVal => {
+            // sort ascending (format "YYYY-MM" sorts lexicographically)
+            const sorted = months.slice().sort();
+            // keep mapping for later download-all
+            previewModal.dataset.sortedMonths = JSON.stringify(sorted);
+
+            sorted.forEach(monthVal => {
                 const [year, month] = monthVal.split('-');
                 const canvas = createCalendarCanvas(parseInt(year), parseInt(month) - 1, teams);
 
@@ -1475,7 +1512,7 @@
 
                     // Draw team schedules
                     let offsetY = 35;
-                    const teamHeight = (cellHeight - 40) / teams.length;
+                    const teamHeight = (cellHeight - 40) / (teams.length || 1);
 
                     teams.forEach((team, idx) => {
                         const shift = schedule[team].shift;
@@ -1490,15 +1527,24 @@
                         ctx.fillStyle = bgColor;
                         ctx.fillRect(x + 4, teamY, cellWidth - 8, teamHeight - 2);
 
-                        // Team name and shift
-                        ctx.fillStyle = (shift === 'off' || shift === 'rest') ? '#4a5568' : '#ffffff';
+                        // Team name
+                        const textColor = (shift === 'off' || shift === 'rest') ? '#4a5568' : '#ffffff';
+                        ctx.fillStyle = textColor;
                         ctx.font = 'bold 11px Arial';
                         ctx.textAlign = 'left';
                         ctx.fillText(team, x + 8, teamY + 14);
 
+                        // Shift text
                         ctx.font = '9px Arial';
-                        const shiftText = shift === 'off' ? 'Off' : shift === 'rest' ? 'Rest' : (shiftNames[shift] || shift);
+                        const shiftText = shift === 'off' ? 'Off Day' : shift === 'rest' ? 'Rest Day' : (shiftNames[shift] || shift);
                         ctx.fillText(shiftText, x + 8, teamY + 26);
+
+                        // Hari kerja yang ke berapa (show for working shifts)
+                        const dayInCycle = schedule[team].dayInCycle;
+                        if (shift !== 'off' && shift !== 'rest') {
+                            ctx.font = '9px Arial';
+                            ctx.fillText(`Day ${dayInCycle}`, x + 8, teamY + 38);
+                        }
                     });
 
                     dayCount++;
@@ -1520,23 +1566,9 @@
         }
 
         // Preview modal controls
-        document.getElementById('closePreviewBtn').addEventListener('click', () => {
-            document.getElementById('previewModal').classList.remove('open');
-        });
-
         document.getElementById('backToSelectBtn').addEventListener('click', () => {
             document.getElementById('previewModal').classList.remove('open');
             openDownloadModal();
-        });
-
-        document.getElementById('downloadAllBtn').addEventListener('click', () => {
-            const items = document.querySelectorAll('.preview-item canvas');
-            items.forEach((canvas, idx) => {
-                setTimeout(() => {
-                    const monthVal = downloadSelectedMonths[idx];
-                    downloadCanvas(canvas, `schedule-${monthVal}.png`);
-                }, idx * 200);
-            });
         });
 
         document.getElementById('previewModal').addEventListener('click', (e) => {
