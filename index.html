@@ -1021,10 +1021,10 @@
         let selectedTeams = [...teams];
 
         const initialState = {
-            'SITI': { shift: '1600-0000', dayInCycle: 5 },
+            'SITI': { shift: 'evening', dayInCycle: 5 },
             'IRA': { shift: 'off', dayInCycle: 7 },
-            'EKIN': { shift: '0800-1600', dayInCycle: 3 },
-            'BALQIS': { shift: '0000-0800', dayInCycle: 1 }
+            'EKIN': { shift: 'morning', dayInCycle: 3 },
+            'BALQIS': { shift: 'night', dayInCycle: 1 }
         };
 
         function getScheduleForDate(date) {
