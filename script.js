@@ -452,8 +452,7 @@ function generateCalendarPreviews(teams, months) {
 
     sorted.forEach(monthVal => {
         const [year, month] = monthVal.split('-');
-        // create high-resolution canvas (scale = 4)
-        const canvas = createCalendarCanvas(parseInt(year), parseInt(month) - 1, teams, 4);
+        const canvas = createCalendarCanvas(parseInt(year), parseInt(month) - 1, teams);
 
         const item = document.createElement('div');
         item.className = 'preview-item';
@@ -493,63 +492,59 @@ function generateDownloadFilename(teams, month, year) {
     return `${teamNames}_${monthAbbr}_${year}.png`;
 }
 
-// Replace existing createCalendarCanvas with high-resolution aware implementation
-function createCalendarCanvas(year, month, teams, scale = 4) {
-    const logicalWidth = 800;
-    const logicalHeight = 900;
+function createCalendarCanvas(year, month, teams) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    // create high-res backing store
-    canvas.width = logicalWidth * scale;
-    canvas.height = logicalHeight * scale;
-
-    // make displayed canvas responsive but use high-res pixels
-    canvas.style.width = '100%';
-    canvas.style.height = 'auto';
-
-    // scale drawing operations to logical coordinates
-    ctx.scale(scale, scale);
+    // Set canvas size to A4 landscape (297mm x 210mm at 96 DPI)
+    canvas.width = 1122;
+    canvas.height = 794;
 
     // Background
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Header
     ctx.fillStyle = '#667eea';
-    ctx.fillRect(0, 0, logicalWidth, 60);
+    ctx.fillRect(0, 0, canvas.width, 50);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 24px Arial';
+    ctx.font = 'bold 22px Arial';
     ctx.textAlign = 'center';
     const date = new Date(year, month, 1);
     const monthName = date.toLocaleString('en-US', { month: 'long' });
-    ctx.fillText(`${monthName} ${year}`, logicalWidth / 2, 38);
+    ctx.fillText(`${monthName} ${year}`, canvas.width / 2, 33);
 
     // Days of week header
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const cellWidth = logicalWidth / 7;
-    const headerY = 80;
+    const cellWidth = canvas.width / 7;
+    const headerY = 70;
 
-    ctx.font = 'bold 16px Arial';
+    ctx.font = 'bold 14px Arial';
     ctx.fillStyle = '#333333';
     days.forEach((day, i) => {
         ctx.textAlign = 'center';
         ctx.fillText(day, cellWidth * i + cellWidth / 2, headerY);
     });
 
-    // Calendar grid
+    // Calendar grid - Calculate actual rows needed
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const cellHeight = 120;
+    
+    // Calculate actual rows needed for this month
+    const actualRowsNeeded = Math.ceil((firstDay + daysInMonth) / 7);
+    
+    // Always reserve space for 6 rows, but calculate cell height based on actual rows
+    const maxRows = 6;
+    const startY = 85;
+    const availableHeight = canvas.height - startY;
+    const cellHeight = availableHeight / maxRows;
+    
     let dayCount = 1;
-    const startY = 100;
 
-    for (let week = 0; week < 6 && dayCount <= daysInMonth; week++) {
+    // Draw only the rows that contain actual dates
+    for (let week = 0; week < actualRowsNeeded; week++) {
         for (let day = 0; day < 7; day++) {
-            if (week === 0 && day < firstDay) continue;
-            if (dayCount > daysInMonth) break;
-
             const x = day * cellWidth;
             const y = startY + week * cellHeight;
 
@@ -557,19 +552,24 @@ function createCalendarCanvas(year, month, teams, scale = 4) {
             ctx.strokeStyle = '#dddddd';
             ctx.strokeRect(x, y, cellWidth, cellHeight);
 
+            // Skip if before first day or after last day
+            if ((week === 0 && day < firstDay) || dayCount > daysInMonth) {
+                continue;
+            }
+
             // Day number
             ctx.fillStyle = '#333333';
-            ctx.font = 'bold 14px Arial';
+            ctx.font = 'bold 13px Arial';
             ctx.textAlign = 'left';
-            ctx.fillText(dayCount, x + 8, y + 18);
+            ctx.fillText(dayCount, x + 6, y + 16);
 
             // Get schedule for this day
             const currentDate = new Date(year, month, dayCount);
             const schedule = getScheduleForDate(currentDate);
 
             // Draw team schedules
-            let offsetY = 35;
-            const teamHeight = (cellHeight - 40) / (teams.length || 1);
+            let offsetY = 30;
+            const teamHeight = (cellHeight - 35) / (teams.length || 1);
 
             teams.forEach((team, idx) => {
                 const shift = schedule[team].shift;
@@ -582,25 +582,43 @@ function createCalendarCanvas(year, month, teams, scale = 4) {
                 else if (shift === 'Evening') bgColor = '#ed8936';
 
                 ctx.fillStyle = bgColor;
-                ctx.fillRect(x + 4, teamY, cellWidth - 8, teamHeight - 2);
+                ctx.fillRect(x + 3, teamY, cellWidth - 6, teamHeight - 2);
 
-                // Team name
-                const textColor = (shift === 'off' || shift === 'rest') ? '#4a5568' : '#ffffff';
+                // Text color: light for working shifts, dark for off/rest
+                const isWorking = !(shift === 'off' || shift === 'rest');
+                const textColor = isWorking ? '#ffffff' : '#4a5568';
                 ctx.fillStyle = textColor;
-                ctx.font = 'bold 11px Arial';
-                ctx.textAlign = 'left';
-                ctx.fillText(team, x + 8, teamY + 14);
 
-                // Shift text
-                ctx.font = '9px Arial';
+                // First line: team (left) and shift (right) on same row
+                ctx.font = 'bold 10px Arial';
+                const leftX = x + 6;
+                const rightPadding = 6;
                 const shiftText = shift === 'off' ? 'Off Day' : shift === 'rest' ? 'Rest Day' : shift;
-                ctx.fillText(shiftText, x + 8, teamY + 26);
 
-                // Day in cycle (show for working shifts)
-                const dayInCycle = schedule[team].dayInCycle;
-                if (shift !== 'off' && shift !== 'rest') {
-                    ctx.font = '9px Arial';
-                    ctx.fillText(`Day ${dayInCycle}`, x + 8, teamY + 38);
+                // measure shift width and compute available width for team name
+                const shiftWidth = ctx.measureText(shiftText).width;
+                const maxTeamWidth = cellWidth - 12 - shiftWidth - 6; // left+right padding + gap
+
+                // truncate team name with ellipsis if needed
+                let teamText = team;
+                if (ctx.measureText(teamText).width > maxTeamWidth) {
+                    while (teamText.length > 0 && ctx.measureText(teamText + '…').width > maxTeamWidth) {
+                        teamText = teamText.slice(0, -1);
+                    }
+                    teamText = teamText + '…';
+                }
+
+                ctx.textAlign = 'left';
+                ctx.fillText(teamText, leftX, teamY + 12);
+                // draw shift right-aligned on same line
+                ctx.fillText(shiftText, x + cellWidth - rightPadding - shiftWidth, teamY + 12);
+
+                // Second line: Day X (only for working shifts) — ensures max 2 rows per team
+                if (isWorking) {
+                    ctx.font = '8px Arial';
+                    ctx.textAlign = 'left';
+                    const dayInCycle = schedule[team].dayInCycle;
+                    ctx.fillText(`Day ${dayInCycle}`, leftX, teamY + 30);
                 }
             });
 

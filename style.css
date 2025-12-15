@@ -292,8 +292,8 @@ body {
     }
 
     .preview-grid {
-        grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-        gap: .75rem
+        grid-template-columns: 1fr;
+        gap: 1rem
     }
 
     .modal-title {
@@ -359,7 +359,7 @@ body {
 
     .preview-grid {
         grid-template-columns: 1fr;
-        gap: .5rem
+        gap: .75rem
     }
 
     .modal-header,
@@ -674,8 +674,8 @@ body {
 
 .preview-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-    gap: 1rem
+    grid-template-columns: 1fr;
+    gap: 1.5rem
 }
 
 .preview-item {
@@ -724,8 +724,8 @@ body {
     }
 
     .preview-grid {
-        grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-        gap: .75rem
+        grid-template-columns: 1fr;
+        gap: 1rem
     }
 
     .modal-title {
@@ -791,7 +791,7 @@ body {
 
     .preview-grid {
         grid-template-columns: 1fr;
-        gap: .5rem
+        gap: .75rem
     }
 
     .modal-header,
