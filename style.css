@@ -224,6 +224,23 @@ body {
     background: #f7fafc
 }
 
+.team-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.shift-time-inline {
+    display: inline-block;
+    font-weight: 600;
+}
+
+.day-cycle {
+    display: block;
+    font-size: .85rem;
+    margin-top: .15rem;
+}
+
 @media (max-width:48rem) {
     .month-year {
         font-size: 1.1rem

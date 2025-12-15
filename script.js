@@ -141,28 +141,35 @@ function generateCalendar() {
                 cell.appendChild(dayNumber);
 
                 for (const team of teamsToShow) {
+                    const shift = schedule[team].shift;
+                    const dayInCycle = schedule[team].dayInCycle;
+
                     const teamDiv = document.createElement('div');
                     teamDiv.className = 'team-schedule';
-                    const shift = schedule[team].shift;
                     teamDiv.classList.add(`shift-${shift.toLowerCase()}`);
 
-                    const teamName = document.createElement('span');
-                    teamName.className = 'team-name';
-                    teamName.textContent = team;
-                    teamDiv.appendChild(teamName);
+                    // first line: TeamName [space] ShiftTime
+                    const firstLine = document.createElement('div');
+                    firstLine.className = 'team-line';
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'team-name';
+                    nameSpan.textContent = team;
+                    const shiftSpan = document.createElement('span');
+                    shiftSpan.className = 'shift-time-inline';
+                    shiftSpan.textContent = shift === 'off' ? 'Off Day' : shift === 'rest' ? 'Rest Day' : shift;
+                    firstLine.appendChild(nameSpan);
+                    firstLine.appendChild(document.createTextNode(' '));
+                    firstLine.appendChild(shiftSpan);
+                    teamDiv.appendChild(firstLine);
 
-                    const shiftTime = document.createElement('span');
-                    shiftTime.className = 'shift-time';
-                    shiftTime.textContent = shift === 'off' ? 'Off Day' : shift === 'rest' ? 'Rest Day' : shift;
-                    teamDiv.appendChild(shiftTime);
-
-                    const dayInCycle = schedule[team].dayInCycle;
+                    // second line: Day X (only for working shifts)
                     if (shift !== 'off' && shift !== 'rest') {
-                        const kerjaInfo = document.createElement('span');
-                        kerjaInfo.className = 'shift-time';
-                        kerjaInfo.textContent = `Day ${dayInCycle}`;
-                        teamDiv.appendChild(kerjaInfo);
+                        const cycleDiv = document.createElement('div');
+                        cycleDiv.className = 'day-cycle';
+                        cycleDiv.textContent = `Day ${dayInCycle}`;
+                        teamDiv.appendChild(cycleDiv);
                     }
+
                     cell.appendChild(teamDiv);
                 }
                 dayCount++;
@@ -462,7 +469,7 @@ function generateCalendarPreviews(teams, months) {
         const filename = generateDownloadFilename(teams, parseInt(month) - 1, parseInt(year));
         
         item.addEventListener('click', () => {
-            downloadCanvas(canvas, filename);
+            shareOrDownloadCanvas(canvas, filename);
         });
 
         previewGrid.appendChild(item);
@@ -593,13 +600,43 @@ function createCalendarCanvas(year, month, teams) {
     return canvas;
 }
 
-function downloadCanvas(canvas, filename) {
-    canvas.toBlob(blob => {
+// detect iOS (simple UA check)
+function isIOS() {
+    return /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+// Try Web Share API (with Files) on supporting platforms (iOS Safari supports this)
+function shareOrDownloadCanvas(canvas, filename) {
+    canvas.toBlob(async (blob) => {
+        if (!blob) return;
+
+        // Prefer Web Share API with files on iOS / supported browsers
+        const canShareFiles = navigator.canShare && typeof File !== 'undefined';
+        if (isIOS() && canShareFiles) {
+            try {
+                const file = new File([blob], filename, { type: blob.type });
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: filename.replace(/\.png$/i, ''),
+                        text: 'Share schedule image'
+                    });
+                    return;
+                }
+            } catch (err) {
+                // fallthrough to download if share fails
+                console.warn('Share failed, falling back to download:', err);
+            }
+        }
+
+        // Fallback: download via anchor
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
+        document.body.appendChild(a);
         a.click();
+        a.remove();
         URL.revokeObjectURL(url);
     });
 }
