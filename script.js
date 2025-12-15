@@ -452,7 +452,8 @@ function generateCalendarPreviews(teams, months) {
 
     sorted.forEach(monthVal => {
         const [year, month] = monthVal.split('-');
-        const canvas = createCalendarCanvas(parseInt(year), parseInt(month) - 1, teams);
+        // create high-resolution canvas (scale = 4)
+        const canvas = createCalendarCanvas(parseInt(year), parseInt(month) - 1, teams, 4);
 
         const item = document.createElement('div');
         item.className = 'preview-item';
@@ -492,32 +493,42 @@ function generateDownloadFilename(teams, month, year) {
     return `${teamNames}_${monthAbbr}_${year}.png`;
 }
 
-function createCalendarCanvas(year, month, teams) {
+// Replace existing createCalendarCanvas with high-resolution aware implementation
+function createCalendarCanvas(year, month, teams, scale = 4) {
+    const logicalWidth = 800;
+    const logicalHeight = 900;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Set canvas size
-    canvas.width = 800;
-    canvas.height = 900;
+    // create high-res backing store
+    canvas.width = logicalWidth * scale;
+    canvas.height = logicalHeight * scale;
+
+    // make displayed canvas responsive but use high-res pixels
+    canvas.style.width = '100%';
+    canvas.style.height = 'auto';
+
+    // scale drawing operations to logical coordinates
+    ctx.scale(scale, scale);
 
     // Background
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
 
     // Header
     ctx.fillStyle = '#667eea';
-    ctx.fillRect(0, 0, canvas.width, 60);
+    ctx.fillRect(0, 0, logicalWidth, 60);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 24px Arial';
     ctx.textAlign = 'center';
     const date = new Date(year, month, 1);
     const monthName = date.toLocaleString('en-US', { month: 'long' });
-    ctx.fillText(`${monthName} ${year}`, canvas.width / 2, 38);
+    ctx.fillText(`${monthName} ${year}`, logicalWidth / 2, 38);
 
     // Days of week header
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const cellWidth = canvas.width / 7;
+    const cellWidth = logicalWidth / 7;
     const headerY = 80;
 
     ctx.font = 'bold 16px Arial';
@@ -585,7 +596,7 @@ function createCalendarCanvas(year, month, teams) {
                 const shiftText = shift === 'off' ? 'Off Day' : shift === 'rest' ? 'Rest Day' : shift;
                 ctx.fillText(shiftText, x + 8, teamY + 26);
 
-                // Hari kerja yang ke berapa (show for working shifts)
+                // Day in cycle (show for working shifts)
                 const dayInCycle = schedule[team].dayInCycle;
                 if (shift !== 'off' && shift !== 'rest') {
                     ctx.font = '9px Arial';
