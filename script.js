@@ -624,12 +624,21 @@ function shareOrDownloadCanvas(canvas, filename) {
                     return;
                 }
             } catch (err) {
-                // fallthrough to download if share fails
-                console.warn('Share failed, falling back to download:', err);
+                // fallthrough to fallback if share fails
+                console.warn('Share failed, falling back to safe iOS handling:', err);
             }
         }
 
-        // Fallback: download via anchor
+        // iOS: avoid automatic "Do you want to download..." prompt by opening image in a new tab
+        if (isIOS()) {
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            // revoke after a while to let user view/save
+            setTimeout(() => URL.revokeObjectURL(url), 15000);
+            return;
+        }
+
+        // Fallback: download via anchor for non-iOS platforms
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
