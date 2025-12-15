@@ -662,6 +662,13 @@ document.getElementById('previewModal').addEventListener('click', (e) => {
     }
 });
 
+// Close download modal when clicking outside (backdrop)
+document.getElementById('downloadModal').addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'downloadModal') {
+        closeDownloadModalFn();
+    }
+});
+
 function updateConfirmButtonState() {
     // Enable confirm button only if at least one team AND one month selected
     const hasTeams = downloadSelectedTeams.length > 0;
