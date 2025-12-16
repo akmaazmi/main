@@ -462,10 +462,9 @@ function generateCalendarPreviews(teams, months) {
         const date = new Date(parseInt(year), parseInt(month) - 1, 1);
         label.textContent = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
 
-        // Wrap canvas so we can control aspect-ratio and ensure it fits
+        // wrap canvas so it can be responsively resized to "fit"
         const wrapper = document.createElement('div');
         wrapper.className = 'canvas-wrapper';
-        // let the wrapper size the canvas responsively
         canvas.style.width = '100%';
         canvas.style.height = '100%';
         canvas.style.display = 'block';
@@ -514,9 +513,8 @@ function createCalendarCanvas(year, month, teams) {
 
     canvas.width = Math.floor(cssWidth * dpr);
     canvas.height = Math.floor(cssHeight * dpr);
-    // DO NOT hard-set inline CSS px size here — let the preview wrapper control display so it can "fit"
-    // canvas.style.width = cssWidth + 'px';
-    // canvas.style.height = cssHeight + 'px';
+    canvas.style.width = cssWidth + 'px';
+    canvas.style.height = cssHeight + 'px';
 
     // Scale the drawing context so coordinates use CSS pixels
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -584,6 +582,9 @@ function createCalendarCanvas(year, month, teams) {
             const schedule = getScheduleForDate(currentDate);
 
             // Draw team schedules
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x, y + 20, cellWidth, cellHeight - 20);
+
             const offsetY = 30;
             const teamHeight = (cellHeight - 35) / (teams.length || 1);
 
