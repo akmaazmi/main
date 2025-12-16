@@ -6,66 +6,68 @@
 
 body {
     font-family: Arial, sans-serif;
-    font-size: clamp(0.875rem, 2vw, 1rem);
+    font-size: 1rem;
     background: linear-gradient(135deg, #667eea 0, #764ba2 100%);
-    padding: clamp(0.75rem, 3vw, 1.5rem);
+    padding: 1.5rem;
     overflow: hidden;
     min-height: 100vh;
 }
 
 .container {
-    margin-top: clamp(0.75rem, 3vw, 1.5rem);
+    margin-top: 1.5rem;
     background: #fff;
-    border-radius: clamp(0.75rem, 2vw, 1rem);
+    border-radius: 1rem;
     box-shadow: 0 1rem 3rem rgba(0, 0, 0, .3);
-    padding: clamp(0.75rem, 3vw, 1.5rem);
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     height: var(--container-height);
 }
 
+/* header dipisah dari container dan dibuat mengapung */
 .header {
     position: sticky;
     z-index: 100;
     background: rgba(255,255,255,0.95);
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    gap: clamp(0.5rem, 2vw, 1rem);
-    padding: clamp(0.75rem, 3vw, 1.5rem);
+    gap: 1rem;
+    padding: 1.5rem;
     box-shadow: 0 .75rem 2rem rgba(0,0,0,.12);
-    border-radius: clamp(0.6rem, 2vw, 0.85rem);
+    border-radius: .85rem;
+    flex-wrap: nowrap;
     backdrop-filter: blur(6px);
 }
 
 .navigation {
     display: flex;
     align-items: center;
-    gap: clamp(0.5rem, 1.5vw, 0.75rem);
+    gap: .75rem;
     justify-self: center
 }
 
 .filters {
     display: flex;
-    gap: clamp(0.5rem, 1.5vw, 0.75rem);
+    gap: .75rem;
     align-items: center;
-    justify-self: start;
+    justify-self: flex-start;
     height: 100%;
-    padding-left: 0;
+    padding-left: .25rem
 }
 
 .download-area {
     display: flex;
     align-items: center;
-    justify-content: end;
-    padding-right: 0;
+    justify-content: flex-end;
+    padding-right: .25rem
 }
 
 .month-year {
     color: #333;
     text-align: center;
-    min-width: clamp(6rem, 15vw, 7.5rem);
-    font-size: clamp(0.9rem, 2.5vw, 1rem);
+    min-width: 7.5rem;
+    font-size: inherit
 }
 
 .dropdown {
@@ -74,7 +76,7 @@ body {
 }
 
 .dropdown-button {
-    padding: clamp(0.35rem, 1vw, 0.45rem) clamp(0.5rem, 1.5vw, 0.6rem);
+    padding: .45rem .6rem;
     border-radius: .4rem;
     border: 1px solid #ccc;
     background: #fff;
@@ -106,13 +108,12 @@ body {
 }
 
 .dropdown-item {
-    padding: clamp(0.3rem, 1vw, 0.4rem) clamp(0.4rem, 1.5vw, 0.6rem);
+    padding: .4rem .6rem;
     cursor: pointer;
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    border-radius: .25rem;
-    font-size: clamp(0.8rem, 2vw, 1rem);
+    border-radius: .25rem
 }
 
 .dropdown-item:hover {
@@ -120,15 +121,15 @@ body {
 }
 
 .dropdown-item .tick {
-    width: clamp(1.1rem, 3vw, 1.25rem);
-    height: clamp(1.1rem, 3vw, 1.25rem);
+    width: 1.25rem;
+    height: 1.25rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border: 1px solid #cbd5e1;
     background: #fff;
     color: transparent;
-    margin-right: clamp(0.6rem, 2vw, 0.8rem);
+    margin-right: .8rem;
     box-sizing: border-box;
     cursor: pointer;
     user-select: none
@@ -151,15 +152,15 @@ body {
     table-layout: fixed
 }
 
+/* sticky header akan berfungsi kerana scroll pada .calendar-wrapper */
 .calendar thead th {
     position: sticky;
     top: 0;
     z-index: 35;
     background: #667eea;
     color: #fff;
-    padding: clamp(0.5rem, 1.5vw, 0.75rem);
-    text-align: center;
-    font-size: clamp(0.75rem, 2vw, 1rem);
+    padding: .75rem;
+    text-align: center
 }
 
 .calendar td,
@@ -169,24 +170,21 @@ body {
 
 .calendar td {
     border: .0625rem solid #ddd;
-    padding: clamp(0.3rem, 1vw, 0.5rem);
+    padding: .5rem;
     vertical-align: top;
-    min-height: 8rem;
-    font-size: clamp(0.6rem, 1.5vw, 0.8rem);
+    min-height: 8rem
 }
 
 .day-number {
-    margin-bottom: clamp(0.3rem, 1vw, 0.5rem);
+    margin-bottom: .5rem;
     color: #333;
-    text-align: center;
-    font-size: clamp(0.8rem, 2vw, 1rem);
+    text-align: center
 }
 
 .team-schedule {
-    margin-bottom: clamp(0.2rem, 0.8vw, 0.3rem);
-    padding: clamp(0.15rem, 0.8vw, 0.3rem);
-    border-radius: .25rem;
-    font-size: clamp(0.55rem, 1.5vw, 0.75rem);
+    margin-bottom: .3rem;
+    padding: .3rem;
+    border-radius: .25rem
 }
 
 .team-name {
@@ -194,8 +192,7 @@ body {
 }
 
 .shift-time {
-    display: block;
-    font-size: clamp(0.5rem, 1.3vw, 0.7rem);
+    display: block
 }
 
 .shift-night {
@@ -240,8 +237,227 @@ body {
 
 .day-cycle {
     display: block;
-    font-size: clamp(0.7rem, 1.8vw, 0.85rem);
+    font-size: .85rem;
     margin-top: .15rem;
+}
+
+@media (max-width:48rem) {
+    .month-year {
+        font-size: 1.1rem
+    }
+
+    .nav-button {
+        padding: .5rem .8rem;
+        font-size: .9rem
+    }
+
+    .calendar thead th {
+        padding: .5rem;
+        font-size: .85rem
+    }
+
+    .calendar td {
+        padding: .3rem;
+        font-size: .7rem
+    }
+
+    .day-number {
+        font-size: .9rem;
+        margin-bottom: .3rem
+    }
+
+    .team-schedule {
+        padding: .2rem;
+        margin-bottom: .2rem;
+        font-size: .65rem
+    }
+
+    .shift-time {
+        font-size: .6rem
+    }
+
+    .download-button {
+        padding: .35rem .6rem;
+        font-size: .85rem
+    }
+
+    .modal {
+        width: 70vw;
+        max-height: 80vh
+    }
+
+    .preview-modal {
+        width: 95vw;
+        max-height: 90vh
+    }
+
+    .preview-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem
+    }
+
+    .modal-title {
+        font-size: .95rem
+    }
+
+    .preview-instruction {
+        font-size: .8rem
+    }
+
+    .download-summary-row {
+        font-size: .85rem
+    }
+
+    .preview-item-label {
+        font-size: .8rem;
+        padding: .4rem
+    }
+
+    .btn {
+        padding: .4rem .55rem;
+        font-size: .9rem
+    }
+}
+
+@media (max-width:30rem) {
+    .container {
+        padding: .75rem
+    }
+
+    .header {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+        align-items: stretch
+    }
+
+    .download-area,
+    .filters,
+    .navigation {
+        justify-content: center;
+        padding: 0
+    }
+
+    .team-schedule {
+        font-size: .55rem;
+        padding: .15rem
+    }
+
+    .shift-time {
+        font-size: .5rem
+    }
+
+    .modal {
+        width: 90vw;
+        max-height: 85vh
+    }
+
+    .preview-modal {
+        width: 98vw;
+        max-height: 92vh
+    }
+
+    .preview-grid {
+        grid-template-columns: 1fr;
+        gap: .75rem
+    }
+
+    .modal-header,
+    .preview-modal-header {
+        padding: .75rem
+    }
+
+    .modal-body,
+    .preview-modal-body {
+        padding: .75rem
+    }
+
+    .modal-footer,
+    .preview-modal-footer {
+        padding: .5rem .75rem;
+        gap: .4rem
+    }
+
+    .modal-title {
+        font-size: .9rem
+    }
+
+    .preview-instruction {
+        font-size: .75rem
+    }
+
+    .download-summary-row {
+        font-size: .8rem;
+        padding-left: .15rem
+    }
+
+    .list-stack .dropdown-item {
+        padding: .35rem .5rem;
+        font-size: .85rem
+    }
+
+    .dropdown-item .tick {
+        width: 1.1rem;
+        height: 1.1rem;
+        margin-right: .6rem
+    }
+
+    .preview-item-label {
+        font-size: .75rem;
+        padding: .35rem
+    }
+
+    .btn {
+        padding: .35rem .5rem;
+        font-size: .85rem
+    }
+
+    .download-actions {
+        gap: .5rem
+    }
+
+    .preview-modal-footer {
+        gap: .5rem
+    }
+}
+
+@media (max-width:20rem) {
+    .modal {
+        width: 95vw;
+        max-height: 90vh
+    }
+
+    .preview-modal {
+        width: 100vw;
+        max-height: 95vh;
+        border-radius: 0
+    }
+
+    .modal-title {
+        font-size: .85rem
+    }
+
+    .preview-instruction {
+        font-size: .7rem
+    }
+
+    .download-summary-row {
+        font-size: .75rem
+    }
+
+    .list-stack .dropdown-item {
+        padding: .3rem .4rem;
+        font-size: .8rem
+    }
+
+    .btn {
+        padding: .3rem .45rem;
+        font-size: .8rem
+    }
+
+    .btn-ghost {
+        padding: .25rem
+    }
 }
 
 .modal-backdrop {
@@ -252,7 +468,7 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 100;
-    padding: clamp(0.5rem, 2vw, 1rem);
+    padding: 1rem
 }
 
 .modal-backdrop.open {
@@ -261,9 +477,9 @@ body {
 
 .modal {
     background: #fff;
-    border-radius: clamp(0.5rem, 1.5vw, 0.75rem);
-    width: clamp(90vw, 50vw, 25vw);
-    max-height: clamp(85vh, 75vh, 70vh);
+    border-radius: .75rem;
+    width: 25vw;
+    max-height: 70vh;
     display: flex;
     flex-direction: column;
     overflow: auto;
@@ -279,49 +495,48 @@ body {
     position: sticky;
     top: 0;
     z-index: 20;
-    padding: clamp(0.75rem, 2vw, 1rem);
+    padding: 1rem;
     background: #fff;
     border-bottom: 1px solid rgba(0, 0, 0, .06)
 }
 
 .modal-title {
-    font-weight: 700;
-    font-size: clamp(0.85rem, 2vw, 1rem);
+    font-weight: 700
 }
 
 .modal-body {
     flex: 1 1 auto;
     overflow: auto;
-    padding: clamp(0.75rem, 2vw, 1rem);
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: clamp(0.5rem, 1.5vw, 0.75rem);
+    gap: .75rem
 }
 
 .modal-footer {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: clamp(0.4rem, 1vw, 0.5rem);
+    gap: .5rem;
     position: sticky;
     bottom: 0;
     z-index: 20;
-    padding: clamp(0.5rem, 1.5vw, 0.75rem) clamp(0.75rem, 2vw, 1rem);
+    padding: .75rem 1rem;
     background: #fff;
     border-top: 1px solid rgba(0, 0, 0, .06)
 }
 
 .download-summary-row {
     color: #374151;
-    font-size: clamp(0.75rem, 2vw, 0.95rem);
-    padding-left: clamp(0.15rem, 0.5vw, 0.25rem);
+    font-size: .95rem;
+    padding-left: .25rem;
     overflow: hidden
 }
 
 .download-actions {
     display: flex;
     justify-content: flex-end;
-    gap: clamp(0.5rem, 2vw, 1rem);
+    gap: 1rem
 }
 
 .list-stack {
@@ -335,7 +550,7 @@ body {
 
 .list-stack .dropdown-item {
     width: 100%;
-    padding: clamp(0.3rem, 1vw, 0.45rem) clamp(0.4rem, 1.5vw, 0.6rem);
+    padding: .45rem .6rem;
     border-radius: .375rem;
     border: 1px solid #e6e6e6;
     background: #fafafa;
@@ -343,16 +558,15 @@ body {
     display: flex;
     align-items: center;
     gap: .6rem;
-    justify-content: flex-start;
-    font-size: clamp(0.8rem, 2vw, 1rem);
+    justify-content: flex-start
 }
 
 .btn {
-    padding: clamp(0.3rem, 1vw, 0.45rem) clamp(0.45rem, 1.5vw, 0.6rem);
+    padding: .45rem .6rem;
     border: none;
     border-radius: .5rem;
     cursor: pointer;
-    font-size: clamp(0.8rem, 2vw, 1rem);
+    font-size: inherit;
     font-family: inherit;
     transition: background .2s, color .2s;
     background: #f3f4f6;
@@ -385,15 +599,14 @@ body {
 
 .btn-ghost {
     background: 0 0;
-    border: 1px solid transparent;
-    padding: clamp(0.25rem, 0.8vw, 0.35rem);
+    border: 1px solid transparent
 }
 
 .download-summary {
     margin-right: auto;
     padding-left: .5rem;
     color: #374151;
-    font-size: clamp(0.85rem, 2vw, 0.95rem);
+    font-size: .95rem;
     align-self: center;
     white-space: nowrap;
     overflow: hidden;
@@ -403,13 +616,13 @@ body {
 
 .nav-button {
     min-width: 2.5rem;
-    padding: clamp(0.35rem, 1vw, 0.35rem) clamp(0.55rem, 1.5vw, 0.55rem);
-    font-size: clamp(0.85rem, 2vw, 1rem);
+    padding: .35rem .55rem
 }
 
-.download-button {
-    padding: clamp(0.35rem, 1vw, 0.45rem) clamp(0.5rem, 1.5vw, 0.6rem);
-    font-size: clamp(0.85rem, 2vw, 1rem);
+.dropdown-button {
+    border: 1px solid #ccc;
+    background: #fff;
+    padding: .4rem .6rem
 }
 
 .preview-modal-backdrop {
@@ -420,7 +633,7 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 110;
-    padding: clamp(0.5rem, 2vw, 1rem);
+    padding: 1rem
 }
 
 .preview-modal-backdrop.open {
@@ -429,10 +642,9 @@ body {
 
 .preview-modal {
     background: #fff;
-    border-radius: clamp(0, 1.5vw, 0.75rem);
+    border-radius: .75rem;
     max-width: 60rem;
-    width: clamp(98vw, 80vw, 60rem);
-    max-height: clamp(92vh, 88vh, 85vh);
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 1rem 3rem rgba(0, 0, 0, .35)
@@ -442,13 +654,13 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: clamp(0.75rem, 2vw, 1rem);
+    padding: 1rem;
     border-bottom: 1px solid #e5e7eb
 }
 
 .preview-instruction {
     margin-top: .25rem;
-    font-size: clamp(0.7rem, 1.8vw, 0.875rem);
+    font-size: .875rem;
     color: #6b7280;
     font-weight: 400
 }
@@ -456,13 +668,13 @@ body {
 .preview-modal-body {
     flex: 1;
     overflow-y: auto;
-    padding: clamp(0.75rem, 3vw, 1.5rem);
+    padding: 1.5rem
 }
 
 .preview-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: clamp(0.75rem, 3vw, 1.5rem);
+    gap: 1.5rem
 }
 
 .preview-item {
@@ -475,12 +687,14 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0;
+    overflow: hidden;
 }
 
 .canvas-wrapper {
     width: 100%;
-    aspect-ratio: clamp(0.75, 1.414, 1.414);
-    max-height: clamp(45vh, 55vh, 60vh);
+    /* preserve canvas aspect ratio used in createCalendarCanvas */
+    aspect-ratio: 1122 / 794;
+    max-height: 60vh;
     background: #fff;
     overflow: hidden;
     display: block;
@@ -494,14 +708,29 @@ body {
     object-fit: contain;
 }
 
+/* smaller screens: reduce height and adjust aspect if needed */
+@media (max-width:48rem) {
+    .canvas-wrapper { max-height: 50vh; aspect-ratio: 4 / 3; }
+}
+@media (max-width:30rem) {
+    .canvas-wrapper { max-height: 45vh; aspect-ratio: 3 / 4; }
+}
+
+/* keep label visible */
+.preview-item-label {
+    padding: .5rem;
+    text-align: center;
+    background: #fff;
+}
+
 .preview-item:hover {
     transform: scale(1.02)
 }
 
 .preview-item-label {
-    padding: clamp(0.35rem, 1vw, 0.5rem);
+    padding: .5rem;
     text-align: center;
-    font-size: clamp(0.75rem, 1.8vw, 0.875rem);
+    font-size: .875rem;
     color: #374151;
     background: #fff
 }
@@ -509,8 +738,8 @@ body {
 .preview-modal-footer {
     display: flex;
     justify-content: flex-end;
-    gap: clamp(0.5rem, 2vw, 1rem);
-    padding: clamp(0.75rem, 2vw, 1rem);
+    gap: 1rem;
+    padding: 1rem;
     border-top: 1px solid #e5e7eb
 }
 
