@@ -1,750 +1,995 @@
 const teams = ['SITI', 'IRA', 'EKIN', 'BALQIS'];
-const shifts = ['Morning', 'Night', 'Evening'];
+const shifts = ['morning', 'evening', 'night', 'rest', 'off'];
 
-const today = new Date();
-const MIN_YEAR = 2026, MAX_YEAR = 2026;
-const MIN_MONTH = 0, MAX_MONTH = 11;
-
-// Initialize to current date
-let currentMonth = today.getMonth(); // 0-11
-let currentYear = today.getFullYear();
-
-// Clamp to valid range [Jan 2026 - Dec 2026]
-const minDate = new Date(MIN_YEAR, MIN_MONTH, 1);
-const maxDate = new Date(MAX_YEAR, MAX_MONTH, 1);
-const currentDate = new Date(currentYear, currentMonth, 1);
-
-if (currentDate < minDate) {
-    // Before Jan 2026 - show Jan 2026
-    currentYear = MIN_YEAR;
-    currentMonth = MIN_MONTH;
-} else if (currentDate > maxDate) {
-    // After Dec 2026 - show Dec 2026
-    currentYear = MAX_YEAR;
-    currentMonth = MAX_MONTH;
-}
-// else: current date is within range, use it as is
-
-let selectedTeams = [...teams];
-
-const initialState = {
-    'SITI': { shift: 'Evening', dayInCycle: 5 },
-    'IRA': { shift: 'off', dayInCycle: 7 },
-    'EKIN': { shift: 'Morning', dayInCycle: 3 },
-    'BALQIS': { shift: 'Night', dayInCycle: 1 }
+const SHIFT_LABELS = {
+  morning: 'Morning',
+  evening: 'Evening',
+  night: 'Night',
+  off: 'Off',
+  rest: 'Rest'
 };
 
-function getScheduleForDate(date) {
-    const jan1_2026 = new Date(2026, 0, 1);
-    const daysDiff = Math.floor((date - jan1_2026) / (1000 * 60 * 60 * 24));
-    const schedule = {};
+// clamp range for display
+const MIN_MONTH = new Date(2026, 0, 1);   // Jan 2026
+const MAX_MONTH = new Date(2026, 11, 1);  // Dec 2026
 
-    for (const team of teams) {
-        const initial = initialState[team];
-        let dayInCycle = initial.dayInCycle + daysDiff;
-        dayInCycle = ((dayInCycle - 1) % 8) + 1;
-
-        if (dayInCycle === 7) {
-            schedule[team] = { shift: 'off', dayInCycle: 7 };
-        } else if (dayInCycle === 8) {
-            schedule[team] = { shift: 'rest', dayInCycle: 8 };
-        } else {
-            let currentShift;
-
-            if (team === 'SITI') {
-                const workCyclesPassed = Math.floor((daysDiff + initial.dayInCycle - 1) / 8);
-                const shiftIndex = (2 + workCyclesPassed) % 3;
-                currentShift = shifts[shiftIndex];
-            } else if (team === 'IRA') {
-                const adjustedDays = daysDiff - 2;
-                if (adjustedDays < 0) {
-                    if (dayInCycle === 7) currentShift = 'off';
-                    else if (dayInCycle === 8) currentShift = 'rest';
-                } else {
-                    const workCyclesPassed = Math.floor((adjustedDays) / 8);
-                    const shiftIndex = (2 + workCyclesPassed) % 3;
-                    currentShift = shifts[shiftIndex];
-                }
-            } else if (team === 'EKIN') {
-                const workCyclesPassed = Math.floor((daysDiff + initial.dayInCycle - 1) / 8);
-                const shiftIndex = (0 + workCyclesPassed) % 3;
-                currentShift = shifts[shiftIndex];
-            } else if (team === 'BALQIS') {
-                const workCyclesPassed = Math.floor((daysDiff + initial.dayInCycle - 1) / 8);
-                const shiftIndex = (1 + workCyclesPassed) % 3;
-                currentShift = shifts[shiftIndex];
-            }
-
-            schedule[team] = { shift: currentShift, dayInCycle: dayInCycle };
-        }
-    }
-
-    return schedule;
+function clampMonth(date) {
+  // normalize to first of month
+  const d = new Date(date.getFullYear(), date.getMonth(), 1);
+  if (d < MIN_MONTH) return new Date(MIN_MONTH);
+  if (d > MAX_MONTH) return new Date(MAX_MONTH);
+  return d;
 }
 
-function generateCalendar() {
-    const calendar = document.querySelector('#calendar');
-    const monthYear = document.querySelector('#monthYear');
-    const prevBtn = document.querySelector('#prevBtn');
-    const nextBtn = document.querySelector('#nextBtn');
-    const minDate = new Date(MIN_YEAR, MIN_MONTH, 1);
-    const maxDate = new Date(MAX_YEAR, MAX_MONTH, 1);
+// start with current month but clamp into 2026 range
+let currentDate = clampMonth(new Date());
 
-    const teamsToShow = selectedTeams.length ? selectedTeams : [...teams];
+const grid = document.getElementById('calendarGrid');
+const label = document.getElementById('monthLabel');
 
-    const date = new Date(currentYear, currentMonth, 1);
-    const monthName = date.toLocaleString('en-US', { month: 'long' });
-    monthYear.textContent = `${monthName} ${currentYear}`;
+// active filter set - start with ALL teams selected by default
+const activeTeams = new Set(teams);
 
-    const prevDate = new Date(currentYear, currentMonth - 1, 1);
-    const nextDate = new Date(currentYear, currentMonth + 1, 1);
-    prevBtn.textContent = '◀';
-    nextBtn.textContent = '▶';
-    prevBtn.disabled = prevDate < minDate;
-    nextBtn.disabled = nextDate > maxDate;
+// --- NEW: scheduling rules anchored at 1 Jan 2026 ---
+const START_DATE = new Date(2026, 0, 1); // Jan 1, 2026
 
-    calendar.innerHTML = '';
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
-    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+// work cycle positions (1..8): Day1..Day6, Off (7), Rest (8)
+const CYCLE_LENGTH = 8;
 
-    for (const day of daysOfWeek) {
-        const th = document.createElement('th');
-        th.textContent = day;
-        headerRow.appendChild(th);
-    }
-    thead.appendChild(headerRow);
-    calendar.appendChild(thead);
+// shift block order -- each block is 8 days (6 work + 2 off)
+const SHIFT_ORDER = ['morning', 'night', 'evening'];
 
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const tbody = document.createElement('tbody');
+// initial state on 1 Jan 2026 as supplied
+const initialState = {
+  'SITI': { shift: 'evening', cycleIndex: 5 },   // Day 5
+  'IRA':  { shift: 'night', cycleIndex: 7 },     // <-- changed to 'night' to match provided daily sequence
+  'EKIN': { shift: 'morning', cycleIndex: 3 },   // Day 3
+  'BALQIS': { shift: 'night', cycleIndex: 1 }    // Day 1
+};
 
-    let dayCount = 1;
-    let rowCount = Math.ceil((firstDay + daysInMonth) / 7);
+// helper: compute assignment for a person on a given date
+function computeAssignment(person, date) {
+  const init = initialState[person];
+  if (!init) return { shift: 'morning', cycleIndex: 1 };
 
-    for (let i = 0; i < rowCount; i++) {
-        const row = document.createElement('tr');
-        for (let j = 0; j < 7; j++) {
-            const cell = document.createElement('td');
+  // normalize to UTC midnight (do not mutate inputs)
+  const dUTC = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const sUTC = Date.UTC(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
 
-            if (i === 0 && j < firstDay) {
-                cell.classList.add('empty-day');
-            } else if (dayCount > daysInMonth) {
-                cell.classList.add('empty-day');
-            } else {
-                const currentDate = new Date(currentYear, currentMonth, dayCount);
-                const schedule = getScheduleForDate(currentDate);
-                const dayNumber = document.createElement('div');
-                dayNumber.className = 'day-number';
-                dayNumber.textContent = dayCount;
-                cell.appendChild(dayNumber);
+  const diffDays = Math.floor((dUTC - sUTC) / (1000 * 60 * 60 * 24));
 
-                for (const team of teamsToShow) {
-                    const shift = schedule[team].shift;
-                    const dayInCycle = schedule[team].dayInCycle;
+  // zero-based initial position in 8-day cycle
+  const startPos = init.cycleIndex - 1;
+  const overallPos = startPos + diffDays;
 
-                    const teamDiv = document.createElement('div');
-                    teamDiv.className = 'team-schedule';
-                    teamDiv.classList.add(`shift-${shift.toLowerCase()}`);
+  // cycle index 1..8 (safe modulo for negatives)
+  const mod = ((overallPos % CYCLE_LENGTH) + CYCLE_LENGTH) % CYCLE_LENGTH;
+  const cycleIndex = mod + 1;
 
-                    // first line: TeamName [space] ShiftTime
-                    const firstLine = document.createElement('div');
-                    firstLine.className = 'team-line';
-                    const nameSpan = document.createElement('span');
-                    nameSpan.className = 'team-name';
-                    nameSpan.textContent = team;
-                    const shiftSpan = document.createElement('span');
-                    shiftSpan.className = 'shift-time-inline';
-                    shiftSpan.textContent = shift === 'off' ? 'Off Day' : shift === 'rest' ? 'Rest Day' : shift;
-                    firstLine.appendChild(nameSpan);
-                    firstLine.appendChild(document.createTextNode(' '));
-                    firstLine.appendChild(shiftSpan);
-                    teamDiv.appendChild(firstLine);
+  // number of completed 8-day blocks since start (can be negative)
+  const completedBlocks = Math.floor((startPos + diffDays) / CYCLE_LENGTH);
 
-                    // second line: Day X (only for working shifts)
-                    if (shift !== 'off' && shift !== 'rest') {
-                        const cycleDiv = document.createElement('div');
-                        cycleDiv.className = 'day-cycle';
-                        cycleDiv.textContent = `Day ${dayInCycle}`;
-                        teamDiv.appendChild(cycleDiv);
-                    }
+  // initial shift block index (map shift to SHIFT_ORDER index)
+  const initialShiftIndex = SHIFT_ORDER.indexOf(init.shift);
+  const shiftIndex = ((initialShiftIndex + completedBlocks) % SHIFT_ORDER.length + SHIFT_ORDER.length) % SHIFT_ORDER.length;
+  const shift = (cycleIndex === 7) ? 'off' : (cycleIndex === 8) ? 'rest' : SHIFT_ORDER[shiftIndex];
 
-                    cell.appendChild(teamDiv);
-                }
-                dayCount++;
-            }
-            row.appendChild(cell);
-        }
-        tbody.appendChild(row);
-    }
-    calendar.appendChild(tbody);
+  return { shift, cycleIndex };
 }
 
-function changeMonth(direction) {
-    const candidate = new Date(currentYear, currentMonth + direction, 1);
-    const minDate = new Date(MIN_YEAR, MIN_MONTH, 1);
-    const maxDate = new Date(MAX_YEAR, MAX_MONTH, 1);
-    if (candidate < minDate || candidate > maxDate) return;
-    currentYear = candidate.getFullYear();
-    currentMonth = candidate.getMonth();
-    generateCalendar();
-}
+// create filter pills in header (left side)
+function createFilterPills() {
+  const header = document.querySelector('.header');
+  const container = document.createElement('div');
+  container.className = 'filters';
 
-function populateFilters() {
-    const teamMenu = document.getElementById('teamDropdownMenu');
-    const teamBtn = document.getElementById('teamDropdownBtn');
+  // Add "All" button first
+  const allBtn = document.createElement('button');
+  allBtn.className = 'filter-pill active';
+  allBtn.type = 'button';
+  allBtn.dataset.name = 'ALL';
+  allBtn.textContent = 'All';
 
-    teamMenu.innerHTML = '';
-
-    const teamAll = document.createElement('div');
-    teamAll.className = 'dropdown-item' + (selectedTeams.length === teams.length ? ' selected' : '');
-    teamAll.innerHTML = `<span class="tick">✓</span><span>Select All</span>`;
-    teamAll.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectedTeams = selectedTeams.length === teams.length ? [] : [...teams];
-        populateFilters();
-        generateCalendar();
-    });
-    teamMenu.appendChild(teamAll);
-
-    for (const t of teams) {
-        const item = document.createElement('div');
-        item.className = 'dropdown-item' + (selectedTeams.includes(t) ? ' selected' : '');
-        item.innerHTML = `<span class="tick">✓</span><span>${t}</span>`;
-        item.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const idx = selectedTeams.indexOf(t);
-            if (idx === -1) selectedTeams.push(t);
-            else selectedTeams.splice(idx, 1);
-            populateFilters();
-            generateCalendar();
-        });
-        teamMenu.appendChild(item);
-    }
-
-    const teamDropdown = document.getElementById('teamDropdown');
-
-    teamBtn.onclick = (e) => {
-        e.stopPropagation();
-        const opened = teamDropdown.classList.toggle('open');
-    };
-}
-
-document.addEventListener('click', () => {
-    document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
-});
-
-populateFilters();
-generateCalendar();
-
-// --- dynamic container height calculation ---
-function updateContainerHeight() {
-    const root = document.documentElement;
-    const bodyStyle = getComputedStyle(document.body);
-    const header = document.querySelector('.header');
+  allBtn.addEventListener('click', () => {
+    const allActive = activeTeams.size === teams.length;
     
-    // Get body padding
-    const padTop = parseFloat(bodyStyle.paddingTop) || 0;
-    const padBottom = parseFloat(bodyStyle.paddingBottom) || 0;
-    
-    // Get header height and margin-top of container
-    const headerHeight = header ? header.getBoundingClientRect().height : 0;
-    const containerMarginTop = 1.5 * 16; // 1.5rem converted to px (assuming 1rem = 16px)
-    
-    // Calculate available height
-    const vh = window.innerHeight;
-    const containerH = vh - padTop - padBottom - headerHeight - containerMarginTop;
-    
-    // Set CSS variable
-    root.style.setProperty('--container-height', `${containerH}px`);
-}
-
-// Call on load and resize
-window.addEventListener('load', updateContainerHeight);
-window.addEventListener('resize', updateContainerHeight);
-
-// Optional: observe header size changes
-const headerEl = document.querySelector('.header');
-if (headerEl && 'ResizeObserver' in window) {
-    new ResizeObserver(updateContainerHeight).observe(headerEl);
-}
-
-// Initial call
-updateContainerHeight();
-
-// --- Download modal logic (module) ---
-const downloadBtn = document.getElementById('downloadBtn');
-const downloadModal = document.getElementById('downloadModal');
-const cancelDownloadBtn = document.getElementById('cancelDownloadBtn');
-const confirmDownloadBtn = document.getElementById('confirmDownloadBtn');
-const downloadTeamList = document.getElementById('downloadTeamList');
-const downloadSelectAllItem = document.getElementById('downloadSelectAllItem');
-const downloadMonthSelectAllItem = document.getElementById('downloadMonthSelectAllItem');
-const downloadMonthList = document.getElementById('downloadMonthList');
-
-// modal-local selections (start unselected by default)
-let downloadSelectedMonths = [];
-let downloadSelectedTeams = [];
-
-function openDownloadModal() {
-    // reset modal selections (unselect all by default)
-    downloadSelectedTeams = [];
-    downloadSelectedMonths = [];
-    populateDownloadTeams();
-    populateDownloadMonths();
-    updateDownloadMonthSelectAllState();
-    updateDownloadSelectAllState();
-    // ensure confirm disabled until at least one team AND one month selected
-    updateConfirmButtonState();
-
-    // open modal, make it focusable/inert handling for accessibility
-    downloadModal.classList.add('open');
-    downloadModal.removeAttribute('aria-hidden');
-    downloadModal.removeAttribute('inert');
-    setTimeout(() => {
-        // focus first focusable inside modal (prefer confirm button)
-        const first = downloadModal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-        if (first) first.focus();
-    }, 0);
-}
-
-function closeDownloadModalFn() {
-    // move focus out of modal before hiding to avoid aria-hidden focus blocking
-    try {
-        if (downloadModal.contains(document.activeElement)) downloadBtn.focus();
-    } catch (e) { /* ignore */ }
-    downloadModal.classList.remove('open');
-    downloadModal.setAttribute('aria-hidden', 'true');
-    // make backdrop inert so it and descendants are removed from the accessibility tree
-    downloadModal.setAttribute('inert', '');
-}
-
-function populateDownloadTeams() {
-    downloadTeamList.innerHTML = '';
-    for (const t of teams) {
-        const el = document.createElement('div');
-        el.className = 'dropdown-item' + (downloadSelectedTeams.includes(t) ? ' selected' : '');
-        el.dataset.value = t;
-        el.innerHTML = `<span class="tick">✓</span><span>${t}</span>`;
-        el.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isSelected = el.classList.toggle('selected');
-            if (isSelected) {
-                if (!downloadSelectedTeams.includes(t)) downloadSelectedTeams.push(t);
-            } else {
-                downloadSelectedTeams = downloadSelectedTeams.filter(x => x !== t);
-            }
-            updateDownloadSelectAllState();
-        });
-        downloadTeamList.appendChild(el);
-    }
-    updateDownloadSelectAllState();
-}
-
-function updateDownloadSelectAllState() {
-    const items = Array.from(downloadTeamList.querySelectorAll('.dropdown-item'));
-    const selected = items.filter(i => i.classList.contains('selected'));
-    downloadSelectAllItem.classList.toggle('selected', items.length > 0 && selected.length === items.length);
-    updateConfirmButtonState();
-    updateDownloadSummary();
-}
-
-downloadSelectAllItem.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const items = Array.from(downloadTeamList.querySelectorAll('.dropdown-item'));
-    const allSelected = downloadSelectAllItem.classList.contains('selected');
-    items.forEach(i => i.classList.toggle('selected', !allSelected));
-    // sync modal-local selection
-    downloadSelectedTeams = allSelected ? [] : items.map(i => i.dataset.value);
-    updateDownloadSelectAllState();
-    updateDownloadSummary();
-});
-
-function populateDownloadMonths() {
-    downloadMonthList.innerHTML = '';
-    for (let y = MIN_YEAR; y <= MAX_YEAR; y++) {
-        for (let m = 0; m < 12; m++) {
-            const candidate = new Date(y, m, 1);
-            const minD = new Date(MIN_YEAR, MIN_MONTH, 1);
-            const maxD = new Date(MAX_YEAR, MAX_MONTH, 1);
-            if (candidate < minD || candidate > maxD) continue;
-            const val = `${y}-${String(m + 1).padStart(2, '0')}`;
-            // show only first 3 letters of month (no year)
-            const label = candidate.toLocaleString('en-US', { month: 'short' });
-            const it = document.createElement('div');
-            it.className = 'dropdown-item' + (downloadSelectedMonths.includes(val) ? ' selected' : '');
-            it.dataset.value = val;
-            it.innerHTML = `<span class="tick">✓</span><span>${label}</span>`;
-            it.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // toggle selection for months (multi-select)
-                const isSelected = it.classList.toggle('selected');
-                if (isSelected) {
-                    if (!downloadSelectedMonths.includes(val)) downloadSelectedMonths.push(val);
-                } else {
-                    downloadSelectedMonths = downloadSelectedMonths.filter(x => x !== val);
-                }
-                updateDownloadMonthSelectAllState();
-            });
-            downloadMonthList.appendChild(it);
-        }
-    }
-    updateDownloadMonthSelectAllState();
-}
-
-function updateDownloadMonthSelectAllState() {
-    const items = Array.from(downloadMonthList.querySelectorAll('.dropdown-item'));
-    if (items.length === 0) {
-        downloadMonthSelectAllItem.classList.remove('selected');
-        updateConfirmButtonState();
-        updateDownloadSummary();
-        return;
-    }
-    const allSelected = items.every(i => downloadSelectedMonths.includes(i.dataset.value));
-    downloadMonthSelectAllItem.classList.toggle('selected', allSelected);
-    updateConfirmButtonState();
-    updateDownloadSummary();
-}
-
-downloadMonthSelectAllItem.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const items = Array.from(downloadMonthList.querySelectorAll('.dropdown-item'));
-    const allSelected = downloadMonthSelectAllItem.classList.contains('selected');
-    if (allSelected) {
-        // deselect all
-        items.forEach(i => i.classList.remove('selected'));
-        downloadSelectedMonths = [];
+    if (allActive) {
+      // Deselect all
+      activeTeams.clear();
+      allBtn.classList.remove('active');
+      container.querySelectorAll('.filter-pill:not([data-name="ALL"])').forEach(btn => {
+        btn.classList.remove('active');
+      });
     } else {
-        // select all
-        items.forEach(i => i.classList.add('selected'));
-        downloadSelectedMonths = items.map(i => i.dataset.value);
+      // Select all
+      teams.forEach(t => activeTeams.add(t));
+      allBtn.classList.add('active');
+      container.querySelectorAll('.filter-pill:not([data-name="ALL"])').forEach(btn => {
+        btn.classList.add('active');
+      });
     }
-    updateDownloadMonthSelectAllState();
-    updateDownloadSummary();
-});
+    renderCalendar();
+  });
 
-downloadBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    openDownloadModal();
-});
-cancelDownloadBtn.addEventListener('click', (e) => { e.stopPropagation(); closeDownloadModalFn(); });
+  container.appendChild(allBtn);
 
-confirmDownloadBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const chosenTeams = downloadSelectedTeams;
-    const chosenMonths = downloadSelectedMonths;
-    closeDownloadModalFn();
-    // Generate and show preview
-    generateCalendarPreviews(chosenTeams, chosenMonths);
-});
+  teams.forEach(t => {
+    const btn = document.createElement('button');
+    // start WITH 'active' class so all buttons are active by default
+    btn.className = 'filter-pill active';
+    btn.type = 'button';
+    btn.dataset.name = t;
 
-function generateCalendarPreviews(teams, months) {
-    const previewModal = document.getElementById('previewModal');
-    const previewGrid = document.getElementById('previewGrid');
+    // label text only
+    btn.textContent = t;
 
-    previewGrid.innerHTML = '';
-
-    // sort ascending (format "YYYY-MM" sorts lexicographically)
-    const sorted = months.slice().sort();
-    // keep mapping for later download-all
-    previewModal.dataset.sortedMonths = JSON.stringify(sorted);
-
-    sorted.forEach(monthVal => {
-        const [year, month] = monthVal.split('-');
-        const canvas = createCalendarCanvas(parseInt(year), parseInt(month) - 1, teams);
-
-        const item = document.createElement('div');
-        item.className = 'preview-item';
-
-        const label = document.createElement('div');
-        label.className = 'preview-item-label';
-        const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-        label.textContent = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-
-        // wrap canvas so it can be responsively resized to "fit"
-        const wrapper = document.createElement('div');
-        wrapper.className = 'canvas-wrapper';
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-        canvas.style.display = 'block';
-        wrapper.appendChild(canvas);
-
-        item.appendChild(wrapper);
-        item.appendChild(label);
-
-        // Generate proper filename using the utility function
-        const filename = generateDownloadFilename(teams, parseInt(month) - 1, parseInt(year));
-        
-        item.addEventListener('click', () => {
-            shareOrDownloadCanvas(canvas, filename);
-        });
-
-        previewGrid.appendChild(item);
+    // button click toggles filter state
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.name;
+      if (activeTeams.has(name)) {
+        activeTeams.delete(name);
+        btn.classList.remove('active');
+      } else {
+        activeTeams.add(name);
+        btn.classList.add('active');
+      }
+      
+      // Update "All" button state
+      const allBtn = container.querySelector('[data-name="ALL"]');
+      if (activeTeams.size === teams.length) {
+        allBtn.classList.add('active');
+      } else {
+        allBtn.classList.remove('active');
+      }
+      
+      renderCalendar();
     });
 
-    previewModal.classList.add('open');
+    container.appendChild(btn);
+  });
+
+  // insert filters at start of header
+  header.prepend(container);
 }
 
-// Move this function BEFORE it's used (before generateCalendarPreviews)
-function generateDownloadFilename(teams, month, year) {
-    // Get month abbreviation (first 3 letters)
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthAbbr = monthNames[month];
-    
-    // Join team names with hyphen
-    const teamNames = teams.join('-');
-    
-    // Format: TEAMA-TEAMB_MonthAbbr_Year
-    return `${teamNames}_${monthAbbr}_${year}.png`;
-}
+function renderCalendar() {
+  grid.innerHTML = '';
 
-function createCalendarCanvas(year, month, teams) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
 
-    // CSS size (logical pixels) for A4 landscape @96dpi as before
-    const cssWidth = 1122;
-    const cssHeight = 794;
+  label.textContent = currentDate.toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric'
+  });
 
-    // Use devicePixelRatio to create high-res backing buffer for mobile
-    const dpr = Math.max(window.devicePixelRatio || 1, 1);
+  // render weekday names first
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  dayNames.forEach(d => {
+    const dn = document.createElement('div');
+    dn.className = 'day-name';
+    dn.textContent = d;
+    grid.appendChild(dn);
+  });
 
-    canvas.width = Math.floor(cssWidth * dpr);
-    canvas.height = Math.floor(cssHeight * dpr);
-    canvas.style.width = cssWidth + 'px';
-    canvas.style.height = cssHeight + 'px';
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // Scale the drawing context so coordinates use CSS pixels
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  for (let i = 0; i < firstDay; i++) {
+    grid.appendChild(document.createElement('div'));
+  }
 
-    // Background
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, cssWidth, cssHeight);
+  // if no teams selected (empty set), show all teams
+  const teamsToShow = activeTeams.size === 0 ? teams : Array.from(activeTeams);
 
-    // Header
-    ctx.fillStyle = '#667eea';
-    ctx.fillRect(0, 0, cssWidth, 50);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const day = document.createElement('div');
+    day.className = 'day';
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 22px Arial';
-    ctx.textAlign = 'center';
-    const date = new Date(year, month, 1);
-    const monthName = date.toLocaleString('en-US', { month: 'long' });
-    ctx.fillText(`${monthName} ${year}`, cssWidth / 2, 33);
+    const date = document.createElement('div');
+    date.className = 'date';
+    date.textContent = d;
+    day.appendChild(date);
 
-    // Days of week header
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const cellWidth = cssWidth / 7;
-    const headerY = 70;
+    teams.forEach(name => {
+      // skip rendering person if NOT in teamsToShow
+      if (!teamsToShow.includes(name)) return;
 
-    ctx.font = 'bold 14px Arial';
-    ctx.fillStyle = '#333333';
-    days.forEach((day, i) => {
-        ctx.textAlign = 'center';
-        ctx.fillText(day, cellWidth * i + cellWidth / 2, headerY);
+      const person = document.createElement('div');
+      person.className = 'person';
+
+      const namePill = document.createElement('span');
+      namePill.className = 'name-pill';
+      namePill.textContent = name;
+
+      // compute assignment for this person/date
+      const assignDate = new Date(year, month, d);
+      const assign = computeAssignment(name, new Date(assignDate)); // pass copy
+
+      const shiftPill = document.createElement('span');
+      shiftPill.className = 'shift-pill ' + assign.shift;
+      shiftPill.textContent = SHIFT_LABELS[assign.shift] ?? assign.shift;
+      let idxMap = { morning: 0, evening: 1, night: 2, rest: 3, off: 4 };
+      shiftPill.dataset.index = idxMap[assign.shift] ?? 0;
+
+      // show work cycle pill ONLY for Day 1..6; do NOT show for Off(7) or Rest(8)
+      if (assign.cycleIndex >= 1 && assign.cycleIndex <= 6) {
+        const workCycle = document.createElement('span');
+        workCycle.className = 'work-cycle-label';
+        workCycle.textContent = 'D' + assign.cycleIndex;
+        workCycle.dataset.cycle = assign.cycleIndex;
+        person.appendChild(namePill);
+        person.appendChild(shiftPill);
+        person.appendChild(workCycle);
+      } else {
+        // Off / Rest: only show shift pill (no work cycle pill)
+        person.appendChild(namePill);
+        person.appendChild(shiftPill);
+      }
+
+      day.appendChild(person);
     });
 
-    // Calendar grid - Calculate actual rows needed
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    grid.appendChild(day);
+  }
+}
 
-    const actualRowsNeeded = Math.ceil((firstDay + daysInMonth) / 7);
+document.getElementById('prevMonth').onclick = () => {
+  const candidate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+  if (candidate < MIN_MONTH) {
+    currentDate = new Date(MAX_MONTH); // wrap to December 2026
+  } else {
+    currentDate = clampMonth(candidate);
+  }
+  renderCalendar();
+};
+
+document.getElementById('nextMonth').onclick = () => {
+  const candidate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+  if (candidate > MAX_MONTH) {
+    currentDate = new Date(MIN_MONTH); // wrap to January 2026
+  } else {
+    currentDate = clampMonth(candidate);
+  }
+  renderCalendar();
+};
+
+// init
+createFilterPills();
+renderCalendar();
+
+// ===== Download Modal Functionality =====
+const modal = document.getElementById('downloadModal');
+const downloadBtn = document.getElementById('downloadBtn');
+const cancelDownload = document.getElementById('cancelDownload');
+const confirmDownload = document.getElementById('confirmDownload');
+const personFilters = document.getElementById('personFilters');
+const monthFilters = document.getElementById('monthFilters');
+
+// selected filters for download
+const downloadSelection = {
+  persons: new Set(),
+  months: new Set()
+};
+
+// make Next disabled by default
+confirmDownload.disabled = true;
+
+// helper to enable/disable Next button
+function updateConfirmState() {
+  const ok = downloadSelection.persons.size > 0 && downloadSelection.months.size > 0;
+  confirmDownload.disabled = !ok;
+}
+
+// open modal when download button clicked
+downloadBtn.addEventListener('click', () => {
+  // reset selections
+  downloadSelection.persons.clear();
+  downloadSelection.months.clear();
+  confirmDownload.disabled = true;
+  
+  // populate person filters
+  personFilters.innerHTML = '';
+  
+  // Add "All" button for persons
+  const allPersonBtn = document.createElement('button');
+  allPersonBtn.className = 'modal-filter-pill';
+  allPersonBtn.textContent = 'All';
+  allPersonBtn.dataset.person = 'ALL';
+  
+  allPersonBtn.addEventListener('click', () => {
+    const allActive = downloadSelection.persons.size === teams.length;
+    
+    if (allActive) {
+      // Deselect all
+      downloadSelection.persons.clear();
+      allPersonBtn.classList.remove('active');
+      personFilters.querySelectorAll('.modal-filter-pill:not([data-person="ALL"])').forEach(pill => {
+        pill.classList.remove('active');
+      });
+    } else {
+      // Select all
+      teams.forEach(t => downloadSelection.persons.add(t));
+      allPersonBtn.classList.add('active');
+      personFilters.querySelectorAll('.modal-filter-pill:not([data-person="ALL"])').forEach(pill => {
+        pill.classList.add('active');
+      });
+    }
+    updateConfirmState();
+  });
+  
+  personFilters.appendChild(allPersonBtn);
+  
+  teams.forEach(person => {
+    const pill = document.createElement('button');
+    pill.className = 'modal-filter-pill';
+    pill.textContent = person;
+    pill.dataset.person = person;
+    
+    pill.addEventListener('click', () => {
+      if (downloadSelection.persons.has(person)) {
+        downloadSelection.persons.delete(person);
+        pill.classList.remove('active');
+      } else {
+        downloadSelection.persons.add(person);
+        pill.classList.add('active');
+      }
+      
+      // Update "All" button state
+      const allBtn = personFilters.querySelector('[data-person="ALL"]');
+      if (downloadSelection.persons.size === teams.length) {
+        allBtn.classList.add('active');
+      } else {
+        allBtn.classList.remove('active');
+      }
+      
+      updateConfirmState();
+    });
+    
+    personFilters.appendChild(pill);
+  });
+  
+  // populate month filters (Jan - Dec 2026)
+  monthFilters.innerHTML = '';
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+  
+  // Add "All" button for months
+  const allMonthBtn = document.createElement('button');
+  allMonthBtn.className = 'modal-filter-pill';
+  allMonthBtn.textContent = 'All';
+  allMonthBtn.dataset.month = 'ALL';
+  
+  allMonthBtn.addEventListener('click', () => {
+    const allActive = downloadSelection.months.size === 12;
+    
+    if (allActive) {
+      // Deselect all
+      downloadSelection.months.clear();
+      allMonthBtn.classList.remove('active');
+      monthFilters.querySelectorAll('.modal-filter-pill:not([data-month="ALL"])').forEach(pill => {
+        pill.classList.remove('active');
+      });
+    } else {
+      // Select all
+      months.forEach((_, index) => downloadSelection.months.add(index));
+      allMonthBtn.classList.add('active');
+      monthFilters.querySelectorAll('.modal-filter-pill:not([data-month="ALL"])').forEach(pill => {
+        pill.classList.add('active');
+      });
+    }
+    updateConfirmState();
+  });
+  
+  monthFilters.appendChild(allMonthBtn);
+  
+  months.forEach((monthName, index) => {
+    const pill = document.createElement('button');
+    pill.className = 'modal-filter-pill';
+    pill.textContent = monthName;
+    pill.dataset.month = index;
+    
+    pill.addEventListener('click', () => {
+      if (downloadSelection.months.has(index)) {
+        downloadSelection.months.delete(index);
+        pill.classList.remove('active');
+      } else {
+        downloadSelection.months.add(index);
+        pill.classList.add('active');
+      }
+      
+      // Update "All" button state
+      const allBtn = monthFilters.querySelector('[data-month="ALL"]');
+      if (downloadSelection.months.size === 12) {
+        allBtn.classList.add('active');
+      } else {
+        allBtn.classList.remove('active');
+      }
+      
+      updateConfirmState();
+    });
+    
+    monthFilters.appendChild(pill);
+  });
+  
+  modal.classList.add('show');
+});
+
+// close modal handlers
+// top-right close button removed; keep cancel button and outside-click to close
+cancelDownload.addEventListener('click', () => {
+  modal.classList.remove('show');
+});
+
+// confirm download handler (now generates images then shows preview modal)
+confirmDownload.addEventListener('click', async () => {
+  // Disable button and show loading
+  const originalText = confirmDownload.textContent;
+  confirmDownload.disabled = true;
+  confirmDownload.textContent = 'Loading';
+  
+  // Block all interactions except cancel button
+  const modalContent = modal.querySelector('.modal-content');
+  modalContent.style.pointerEvents = 'none';
+  cancelDownload.style.pointerEvents = 'auto';
+  cancelDownload.style.cursor = 'pointer';
+  
+  // Block clicking outside modal (backdrop click)
+  modal.style.pointerEvents = 'none';
+  cancelDownload.parentElement.style.pointerEvents = 'auto'; // re-enable footer for cancel button
+  
+  // Flag to track if user cancelled
+  let isCancelled = false;
+  
+  // Cancel handler - set flag and cleanup
+  const cancelHandler = () => {
+    isCancelled = true;
+  };
+  
+  // Add one-time cancel listener
+  cancelDownload.addEventListener('click', cancelHandler, { once: true });
+  
+  // Add loading animation
+  let dots = 0;
+  const loadingInterval = setInterval(() => {
+    dots = (dots + 1) % 4;
+    confirmDownload.textContent = 'Loading' + '.'.repeat(dots);
+  }, 300);
+
+  try {
+    // collect selected months in ascending order
+    const monthsArray = Array.from(downloadSelection.months).sort((a, b) => a - b);
+    if (monthsArray.length === 0) {
+      clearInterval(loadingInterval);
+      confirmDownload.textContent = originalText;
+      confirmDownload.disabled = false;
+      modalContent.style.pointerEvents = 'auto';
+      modal.style.pointerEvents = 'auto';
+      cancelDownload.removeEventListener('click', cancelHandler);
+      return;
+    }
+
+    // use fixed maximum rows (6)
     const maxRows = 6;
-    const startY = 85;
-    const availableHeight = cssHeight - startY;
-    const cellHeight = availableHeight / maxRows;
 
-    let dayCount = 1;
-
-    for (let week = 0; week < actualRowsNeeded; week++) {
-        for (let day = 0; day < 7; day++) {
-            const x = day * cellWidth;
-            const y = startY + week * cellHeight;
-
-            // Cell border
-            ctx.strokeStyle = '#dddddd';
-            ctx.strokeRect(x, y, cellWidth, cellHeight);
-
-            if ((week === 0 && day < firstDay) || dayCount > daysInMonth) {
-                continue;
-            }
-
-            // Day number
-            ctx.fillStyle = '#333333';
-            ctx.font = 'bold 13px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(dayCount, x + 6, y + 16);
-
-            // Get schedule for this day
-            const currentDate = new Date(year, month, dayCount);
-            const schedule = getScheduleForDate(currentDate);
-
-            // Draw team schedules
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(x, y + 20, cellWidth, cellHeight - 20);
-
-            const offsetY = 30;
-            const teamHeight = (cellHeight - 35) / (teams.length || 1);
-
-            teams.forEach((team, idx) => {
-                const shift = schedule[team].shift;
-                const teamY = y + offsetY + idx * teamHeight;
-
-                // Background color
-                let bgColor = '#e2e8f0';
-                if (shift === 'Night') bgColor = '#4a5568';
-                else if (shift === 'Morning') bgColor = '#48bb78';
-                else if (shift === 'Evening') bgColor = '#ed8936';
-
-                ctx.fillStyle = bgColor;
-                ctx.fillRect(x + 3, teamY, cellWidth - 6, teamHeight - 2);
-
-                const isWorking = !(shift === 'off' || shift === 'rest');
-                const textColor = isWorking ? '#ffffff' : '#4a5568';
-                ctx.fillStyle = textColor;
-
-                // First line: team (left) and shift (right)
-                ctx.font = 'bold 10px Arial';
-                const leftX = x + 6;
-                const rightPadding = 6;
-                const shiftText = shift === 'off' ? 'Off Day' : shift === 'rest' ? 'Rest Day' : shift;
-
-                const shiftWidth = ctx.measureText(shiftText).width;
-                const maxTeamWidth = cellWidth - 12 - shiftWidth - 6;
-
-                let teamText = team;
-                if (ctx.measureText(teamText).width > maxTeamWidth) {
-                    while (teamText.length > 0 && ctx.measureText(teamText + '…').width > maxTeamWidth) {
-                        teamText = teamText.slice(0, -1);
-                    }
-                    teamText = teamText + '…';
-                }
-
-                ctx.textAlign = 'left';
-                ctx.fillText(teamText, leftX, teamY + 12);
-                ctx.fillText(shiftText, x + cellWidth - rightPadding - shiftWidth, teamY + 12);
-
-                // Second line: Day X (only for working shifts)
-                if (isWorking) {
-                    ctx.font = '8px Arial';
-                    ctx.textAlign = 'left';
-                    const dayInCycle = schedule[team].dayInCycle;
-                    ctx.fillText(`Day ${dayInCycle}`, leftX, teamY + 30);
-                }
-            });
-
-            dayCount++;
-        }
+    // collect generated images in ascending month order
+    const images = [];
+    for (const monthIndex of monthsArray) {
+      // Check if cancelled before processing each month
+      if (isCancelled) {
+        console.log('Image generation cancelled by user');
+        break;
+      }
+      
+      const result = await generateCalendarImage(monthIndex, downloadSelection.persons, maxRows);
+      images.push(result);
     }
 
-    return canvas;
+    // Clear loading animation
+    clearInterval(loadingInterval);
+    confirmDownload.textContent = originalText;
+    
+    // If cancelled, just cleanup and close modal
+    if (isCancelled) {
+      confirmDownload.disabled = false;
+      modalContent.style.pointerEvents = 'auto';
+      modal.style.pointerEvents = 'auto';
+      modal.classList.remove('show');
+      return;
+    }
+    
+    if (images.length === 0) {
+      confirmDownload.disabled = false;
+      modalContent.style.pointerEvents = 'auto';
+      modal.style.pointerEvents = 'auto';
+      cancelDownload.removeEventListener('click', cancelHandler);
+      return;
+    }
+
+    // close selection modal
+    modal.classList.remove('show');
+    
+    // Reset button state and re-enable interactions
+    confirmDownload.disabled = false;
+    modalContent.style.pointerEvents = 'auto';
+    modal.style.pointerEvents = 'auto';
+    
+    openPreviewModal(images);
+  } catch (error) {
+    // Handle error
+    clearInterval(loadingInterval);
+    confirmDownload.textContent = originalText;
+    confirmDownload.disabled = false;
+    modalContent.style.pointerEvents = 'auto';
+    modal.style.pointerEvents = 'auto';
+    cancelDownload.removeEventListener('click', cancelHandler);
+    console.error('Error generating calendar images:', error);
+  } finally {
+    // Always remove the cancel listener when done
+    cancelDownload.removeEventListener('click', cancelHandler);
+  }
+});
+
+// generateCalendarImage now accepts optional maxRows to force uniform row height
+async function generateCalendarImage(monthIndex, selectedPersons, maxRows) {
+  // Scaling factor for saved images
+  const SCALE = 3.6;
+  
+  // A4 Landscape dimensions at 300 DPI
+  const A4_WIDTH = 3508;
+  const A4_HEIGHT = 2480;
+  
+  // Create style element for export-specific scaling
+  const styleEl = document.createElement('style');
+  styleEl.id = 'export-styles';
+  styleEl.textContent = `
+    .export-container {
+      position: absolute;
+      left: -9999px;
+      width: ${A4_WIDTH}px;
+      height: ${A4_HEIGHT}px;
+      background: transparent;
+      box-sizing: border-box;
+      font-family: "Google Sans", sans-serif;
+      overflow: hidden;
+    }
+    
+    .export-calendar {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: ${6 * SCALE}px;
+      background: transparent;
+      border: ${2 * SCALE}px solid lightslategray;
+      border-radius: ${6 * SCALE}px;
+      box-sizing: border-box;
+    }
+    
+    .export-title-block {
+      text-align: center;
+      margin-bottom: ${6 * SCALE}px;
+      flex-shrink: 0;
+    }
+    
+    .export-title {
+      margin: 0;
+      font-size: ${16 * SCALE}px;
+      font-weight: 600;
+      font-family: "Google Sans", sans-serif;
+      color: #111827;
+    }
+    
+    .export-grid-container {
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+    
+    .export-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: ${6 * SCALE}px;
+      height: 100%;
+    }
+    
+    .export-day-name {
+      font-size: ${13 * SCALE}px;
+      font-weight: 600;
+      text-align: center;
+      background: transparent;
+      border-bottom: ${2 * SCALE}px solid lightslategray;
+      font-family: "Google Sans", sans-serif;
+      color: #111827;
+      height: fit-content;
+    }
+    
+    .export-day {
+      padding: ${4 * SCALE}px;
+      background: #fbfbfb;
+      border: ${2 * SCALE}px solid lightslategray;
+      border-radius: ${4 * SCALE}px;
+      box-sizing: border-box;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .export-date {
+      font-size: ${12 * SCALE}px;
+      font-weight: 600;
+      margin-bottom: ${6 * SCALE}px;
+      color: #111827;
+      font-family: "Google Sans", sans-serif;
+      flex-shrink: 0;
+    }
+    
+    .export-person {
+      align-items: center;
+      display: flex;
+      margin-bottom: ${6 * SCALE}px;
+      gap: ${6 * SCALE}px;
+      min-height: 0;
+    }
+    
+    .export-name-pill {
+      font-size: ${12 * SCALE}px;
+      font-weight: 600;
+      color: #111827;
+      font-family: "Google Sans", sans-serif;
+      white-space: nowrap;
+    }
+    
+    .export-shift-pill {
+      font-size: ${11 * SCALE}px;
+      padding: ${1 * SCALE}px ${4 * SCALE}px;
+      white-space: nowrap;
+      color: #fbfbfb;
+      border-radius: ${6 * SCALE}px;
+      font-family: "Google Sans", sans-serif;
+      font-weight: 600;
+    }
+    
+    .export-shift-pill.morning { background: #166534; }
+    .export-shift-pill.evening { background: #b91c1c; }
+    .export-shift-pill.night { background: #6b7280; }
+    .export-shift-pill.rest { background: antiquewhite; color: black; }
+    .export-shift-pill.off { background: antiquewhite; color: black; }
+    
+    .export-work-cycle {
+      font-size: ${11 * SCALE}px;
+      color: #6b7280;
+      font-family: "Google Sans", sans-serif;
+      font-weight: 400;
+      white-space: nowrap;
+    }
+  `;
+  document.head.appendChild(styleEl);
+  
+  // Create temporary container
+  const tempContainer = document.createElement('div');
+  tempContainer.className = 'export-container';
+  document.body.appendChild(tempContainer);
+   
+  // Create calendar wrapper
+  const calendarWrapper = document.createElement('div');
+  calendarWrapper.className = 'export-calendar';
+  
+  // Add title
+  const titleBlock = document.createElement('div');
+  titleBlock.className = 'export-title-block';
+  const title = document.createElement('h1');
+  title.className = 'export-title';
+  title.textContent = `${getMonthName(monthIndex)} 2026`;
+  titleBlock.appendChild(title);
+  calendarWrapper.appendChild(titleBlock);
+  
+  // Create grid container
+  const gridContainer = document.createElement('div');
+  gridContainer.className = 'export-grid-container';
+  
+  const tempGrid = document.createElement('div');
+  tempGrid.className = 'export-grid';
+  
+  gridContainer.appendChild(tempGrid);
+  calendarWrapper.appendChild(gridContainer);
+  tempContainer.appendChild(calendarWrapper);
+   
+  // Render calendar
+  const year = 2026;
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+   
+  // Add day name headers
+  dayNames.forEach(d => {
+    const dn = document.createElement('div');
+    dn.className = 'export-day-name';
+    dn.textContent = d;
+    tempGrid.appendChild(dn);
+  });
+   
+  const firstDay = new Date(year, monthIndex, 1).getDay();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+   
+  // Add empty cells
+  for (let i = 0; i < firstDay; i++) {
+    tempGrid.appendChild(document.createElement('div'));
+  }
+  
+  // Normalize selected persons
+  let personsArr;
+  if (!selectedPersons || selectedPersons.size === 0) {
+    personsArr = Array.from(teams);
+  } else {
+    personsArr = Array.from(selectedPersons).sort((a, b) => teams.indexOf(a) - teams.indexOf(b));
+  }
+
+  // Calculate grid rows
+  const rowsForThisMonth = Math.ceil((firstDay + daysInMonth) / 7);
+  const effectiveRows = maxRows || rowsForThisMonth;
+
+  // Calculate cell height - UPDATED calculation with fit-content day name
+  const containerPaddingTotal = 8 * SCALE * 2;
+  const calendarPaddingTotal = 8 * SCALE * 2;
+  const calendarBorderTotal = 2 * SCALE * 2;
+  const titleBlockEstimate = 24 * SCALE + 8 * SCALE;
+  const dayNameHeight = 13 * SCALE + 2 * SCALE;
+  const gap = 8 * SCALE;
+  
+  const availableForCells = A4_HEIGHT - containerPaddingTotal - calendarPaddingTotal - 
+                            calendarBorderTotal - titleBlockEstimate - dayNameHeight - 
+                            (gap * (effectiveRows + 1));
+  
+  const cellHeight = Math.floor(availableForCells / effectiveRows);
+
+  // Set grid template rows with fit-content for day names
+  tempGrid.style.gridTemplateRows = `repeat(7, fit-content) repeat(${effectiveRows}, ${cellHeight}px)`;
+
+  // Add calendar days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const day = document.createElement('div');
+    day.className = 'export-day';
+     
+    const date = document.createElement('div');
+    date.className = 'export-date';
+    date.textContent = d;
+    day.appendChild(date);
+     
+    personsArr.forEach(name => {
+      const person = document.createElement('div');
+      person.className = 'export-person';
+       
+      const namePill = document.createElement('span');
+      namePill.className = 'export-name-pill';
+      namePill.textContent = name;
+       
+      const assignDate = new Date(year, monthIndex, d);
+      const assign = computeAssignment(name, assignDate);
+       
+      const shiftPill = document.createElement('span');
+      shiftPill.className = `export-shift-pill ${assign.shift}`;
+      shiftPill.textContent = SHIFT_LABELS[assign.shift] ?? assign.shift;
+       
+      person.appendChild(namePill);
+      person.appendChild(shiftPill);
+       
+      // Add work cycle label for Day 1-6
+      if (assign.cycleIndex >= 1 && assign.cycleIndex <= 6) {
+        const workCycle = document.createElement('span');
+        workCycle.className = 'export-work-cycle';
+        workCycle.textContent = 'D' + assign.cycleIndex;
+        person.appendChild(workCycle);
+      }
+       
+      day.appendChild(person);
+    });
+     
+    tempGrid.appendChild(day);
+  }
+  
+  // Wait for render
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Generate image
+  const canvas = await html2canvas(tempContainer, {
+    scale: 2.5,
+    useCORS: true,
+    backgroundColor: 'whitesmoke',
+    width: A4_WIDTH,
+    height: A4_HEIGHT
+  });
+  
+  const monthName = getMonthName(monthIndex);
+  const outYear = 2026;
+  const personsForName = personsArr.length ? personsArr : ['All'];
+  const personNames = personsForName.join('-');
+  const filename = `${personNames}_${monthName}_${outYear}.png`;
+
+  const blob = await new Promise((resolve) => {
+    canvas.toBlob((b) => resolve(b), 'image/png', 1.0);
+  });
+
+  // Clean up
+  document.body.removeChild(tempContainer);
+  document.head.removeChild(styleEl);
+
+  return { blob, filename, monthIndex };
 }
 
-// detect iOS (simple UA check)
-function isIOS() {
-    return /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// ===== Preview modal logic =====
+const previewModal = document.getElementById('previewModal');
+// removed single-image / navigation refs
+const previewList = document.getElementById('previewList');
+const closePreviewBtn = document.getElementById('closePreview');
+const backPreviewBtn = document.getElementById('backPreview');
+
+let previewItems = [];
+let previewObjectUrls = [];
+
+function openPreviewModal(items) {
+  // items: [{blob, filename, monthIndex}, ...]
+  previewItems = items;
+  // create object URLs
+  previewObjectUrls = previewItems.map(it => URL.createObjectURL(it.blob));
+
+  // render all images in single page
+  previewList.innerHTML = '';
+  
+  // Add iOS-specific instruction if on iOS device
+  if (isIOSDevice()) {
+    const iosInstruction = document.querySelector('.preview-instruction');
+    if (iosInstruction) {
+      iosInstruction.textContent = 'Tap any image to share and save to Photos';
+    }
+  }
+  
+  previewItems.forEach((it, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'preview-wrap';
+    const img = document.createElement('img');
+    img.className = 'preview-img';
+    img.src = previewObjectUrls[idx];
+    img.alt = it.filename;
+    
+    // Update title based on device
+    if (isIOSDevice()) {
+      img.title = `Tap to share ${getMonthName(it.monthIndex)} 2026`;
+    } else {
+      img.title = `Click to download ${getMonthName(it.monthIndex)} 2026`;
+    }
+
+    // click any image to download/share that image
+    img.addEventListener('click', async () => {
+      await downloadBlobAs(previewItems[idx].blob, previewItems[idx].filename);
+    });
+
+    const label = document.createElement('div');
+    label.className = 'preview-label';
+    label.textContent = it.filename;
+    wrap.appendChild(img);
+    wrap.appendChild(label);
+    previewList.appendChild(wrap);
+  });
+
+  previewModal.classList.add('show');
 }
 
-// Try Web Share API (with Files) on supporting platforms (iOS Safari supports this)
-function shareOrDownloadCanvas(canvas, filename) {
-    canvas.toBlob(async (blob) => {
-        if (!blob) return;
-
-        // Prefer Web Share API with files on iOS / supported browsers
-        const canShareFiles = navigator.canShare && typeof File !== 'undefined';
-        if (isIOS() && canShareFiles) {
-            try {
-                const file = new File([blob], filename, { type: blob.type });
-                if (navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: filename.replace(/\.png$/i, ''),
-                        text: 'Share schedule image'
-                    });
-                    return;
-                }
-            } catch (err) {
-                // fallthrough to fallback if share fails
-                console.warn('Share failed, falling back to safe iOS handling:', err);
-            }
-        }
-
-        // iOS: avoid automatic "Do you want to download..." prompt by opening image in a new tab
-        if (isIOS()) {
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-            // revoke after a while to let user view/save
-            setTimeout(() => URL.revokeObjectURL(url), 15000);
-            return;
-        }
-
-        // Fallback: download via anchor for non-iOS platforms
-        const url = URL.createObjectURL(blob);
+// Updated download function with iOS share support
+async function downloadBlobAs(blob, filename) {
+  // Check if running on iOS and Web Share API is available
+  if (isIOSDevice() && navigator.share) {
+    try {
+      // For iOS, use Web Share API
+      const file = new File([blob], filename, { type: 'image/png' });
+      
+      // Check if files can be shared
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Shift Schedule',
+          text: `Download ${filename}`
+        });
+        console.log('Successfully shared on iOS');
+      } else {
+        // Fallback: convert to base64 and use data URL
+        const base64 = await blobToBase64(blob);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = base64;
         a.download = filename;
         document.body.appendChild(a);
         a.click();
         a.remove();
-        URL.revokeObjectURL(url);
-    });
+      }
+    } catch (error) {
+      // User cancelled or error occurred
+      if (error.name !== 'AbortError') {
+        console.error('Error sharing on iOS:', error);
+        // Fallback to regular download
+        regularDownload(blob, filename);
+      }
+    }
+  } else {
+    // Non-iOS or Web Share API not available
+    regularDownload(blob, filename);
+  }
 }
 
-// Preview modal controls
-document.getElementById('backToSelectBtn').addEventListener('click', () => {
-    document.getElementById('previewModal').classList.remove('open');
-    openDownloadModal();
-});
-
-document.getElementById('previewModal').addEventListener('click', (e) => {
-    if (e.target.id === 'previewModal') {
-        document.getElementById('previewModal').classList.remove('open');
-    }
-});
-
-// Close download modal when clicking outside (backdrop)
-document.getElementById('downloadModal').addEventListener('click', (e) => {
-    if (e.target && e.target.id === 'downloadModal') {
-        closeDownloadModalFn();
-    }
-});
-
-function updateConfirmButtonState() {
-    // Enable confirm button only if at least one team AND one month selected
-    const hasTeams = downloadSelectedTeams.length > 0;
-    const hasMonths = downloadSelectedMonths.length > 0;
-    confirmDownloadBtn.disabled = !(hasTeams && hasMonths);
+// Regular download for non-iOS devices
+function regularDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
-function updateDownloadSummary() {
-    const summaryTeam = document.getElementById('downloadSummaryTeam');
-    const summaryMonth = document.getElementById('downloadSummaryMonth');
-
-    // Team summary
-    if (downloadSelectedTeams.length === 0) {
-        summaryTeam.textContent = 'Team: None';
-    } else if (downloadSelectedTeams.length === teams.length) {
-        summaryTeam.textContent = 'Team: All teams';
-    } else {
-        summaryTeam.textContent = `Team: ${downloadSelectedTeams.join(', ')}`;
-    }
-
-    // Month summary
-    if (downloadSelectedMonths.length === 0) {
-        summaryMonth.textContent = 'Month: None';
-    } else {
-        const monthLabels = downloadSelectedMonths.map(val => {
-            const [year, month] = val.split('-');
-            const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-            return date.toLocaleString('en-US', { month: 'short' });
-        });
-
-        if (downloadSelectedMonths.length === 12) {
-            summaryMonth.textContent = 'Month: All months';
-        } else {
-            summaryMonth.textContent = `Month: ${monthLabels.join(', ')}`;
-        }
-    }
+// Helper function to detect iOS device
+function isIOSDevice() {
+  return [
+    'iPad Simulator',
+    'iPhone Simulator',
+    'iPod Simulator',
+    'iPad',
+    'iPhone',
+    'iPod'
+  ].includes(navigator.platform)
+  // iPad on iOS 13+ detection
+  || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
 }
+
+// Helper function to convert blob to base64 for iOS share
+async function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// close handlers (revoke URLs)
+function closePreview() {
+  previewModal.classList.remove('show');
+  previewList.innerHTML = '';
+  previewItems = [];
+  previewObjectUrls.forEach(u => URL.revokeObjectURL(u));
+  previewObjectUrls = [];
+}
+
+closePreviewBtn.addEventListener('click', closePreview);
+
+// close modal when clicking outside the download modal
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) {
+    modal.classList.remove('show');
+  }
+});
+
+// close modal when clicking outside
+previewModal.addEventListener('click', (e) => {
+  if (e.target === previewModal) closePreview();
+});
+
+// Helper function to get month name
+function getMonthName(monthIndex) {
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+  return months[monthIndex];
+}
+
+// Inject local SVG favicon (no external file, works offline)
+(function installFavicon() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4565fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.head.appendChild(link);
+  }
+  link.href = url;
+  // revoke on unload
+  window.addEventListener('unload', () => URL.revokeObjectURL(url));
+})();
