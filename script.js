@@ -971,6 +971,15 @@ previewModal.addEventListener('click', (e) => {
   if (e.target === previewModal) closePreview();
 });
 
+// Update the back button handler
+backPreviewBtn.addEventListener('click', () => {
+  // Close preview modal
+  closePreview();
+  
+  // Reopen download modal
+  modal.classList.add('show');
+});
+
 // Helper function to get month name
 function getMonthName(monthIndex) {
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 
