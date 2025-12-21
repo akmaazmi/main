@@ -6,7 +6,7 @@
   --off: antiquewhite;
   --rest: antiquewhite;
   --background-default: whitesmoke;
-  --border-default: 2px solid #5f6f82;
+  --border-default: 2px solid var(--night);
   --border-active: 2px solid var(--primary);
 }
 
@@ -407,6 +407,18 @@ body {
   border: var(--border-active);
   cursor: not-allowed;
   opacity: 0.8;
+}
+
+.modal-btn-inspect {
+  color: black;
+  background: var(--background-default);
+  border: var(--border-default);
+}
+
+.modal-btn-inspect:hover {
+  color: var(--primary);
+  background: var(--background-default);
+  border: var(--border-active);
 }
 
 .modal-header.preview-header {
