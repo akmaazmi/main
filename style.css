@@ -40,16 +40,16 @@ body {
   border-radius: 16px;
 }
 
-/* version label (small text at top of header) */
 .header .version {
   position: absolute;
+  display: none;
   left: 50%;
   top: 3%;
   font-size: 12px;
   font-weight: 600;
   color: #6b7280;
   transform: translate(-50%);
-  display: none;
+  
 }
 
 .filters {
@@ -466,10 +466,6 @@ body {
 }
 
 @media (max-width: 768px) {
-  :root {
-    --scale: 0.85;
-  }
-
   .header {
     flex-direction: column;
     gap: calc(12px * var(--scale));
@@ -498,31 +494,31 @@ body {
   }
 }
 
-/* Mobile devices (480px and below) */
 @media (max-width: 480px) {
-  :root {
-    --scale: 0.7;
-  }
-
   .container {
     height: 100dvh;
+    padding: 9.6px;
   }
 
   .header {
     flex-direction: column;
-    gap: 10px;
+    padding: 9.6px;
+    gap: 9.6px;
   }
+
+  .filters {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    gap: 9.6px;
+  }
+
 
   .month-control {
     position: static;
     transform: none;
   }
 
-  .filters {
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
 
   .download {
     width: 100%;
@@ -530,7 +526,7 @@ body {
   }
 
   .calendar {
-    padding-bottom: calc(24px * var(--scale) + env(safe-area-inset-bottom));
+    margin-top: 9.6px;
   }
 
   .modal-content {
