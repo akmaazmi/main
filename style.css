@@ -42,7 +42,6 @@ body {
 
 .header .version {
   position: absolute;
-  display: none;
   left: 50%;
   top: 3%;
   font-size: 12px;
