@@ -71,7 +71,7 @@ body {
 .filters {
   align-items: center;
   display: flex;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
 }
 
 .filter-pill {
@@ -349,7 +349,7 @@ body {
 .modal-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
 }
 
 .modal-filter-pill {
@@ -386,7 +386,7 @@ body {
   justify-content: flex-end;
   padding: var(--space-md);
   border-top: var(--border-default);
-  gap: var(--space-xs);
+  gap: var(--space-sm);
 }
 
 .modal-btn {
@@ -490,29 +490,29 @@ body {
 /* Mobile devices (480px and below) */
 @media (max-width: 480px) {
   :root {
-    --space-xxs: 2.8px;
-    --space-xs: 5.6px;
-    --space-sm: 8.4px;
-    --space-md: 11.2px;
+    --space-xxs: 2.6px;
+    --space-xs: 5.2px;
+    --space-sm: 7.8px;
+    --space-md: 10.4px;
 
-    --fs-xxs: 7.7px;
-    --fs-xs: 8.4px;
-    --fs-sm: 9.1px;
-    --fs-md: 11.2px;
+    --fs-xxs: 7.15px;
+    --fs-xs: 7.8px;
+    --fs-sm: 8.45px;
+    --fs-md: 10.4px;
 
-    --radius-xxs: 2.8px;
-    --radius-xs: 5.6px;
-    --radius-md: 11.2px;
+    --radius-xxs: 2.6px;
+    --radius-xs: 5.2px;
+    --radius-md: 10.4px;
 
-    --border-default: 1.4px solid var(--night);
-    --border-active: 1.4px solid var(--primary);
+    --border-default: 1.3px solid var(--night);
+    --border-active: 1.3px solid var(--primary);
 
-    --icon-size: 16.8px;
+    --icon-size: 15.6px;
   }
 
   .header {
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
   }
 
   .month-control {
