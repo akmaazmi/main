@@ -490,24 +490,24 @@ body {
 /* Mobile devices (480px and below) */
 @media (max-width: 480px) {
   :root {
-    --space-xxs: 4px;
-    --space-xs: 8px;
-    --space-sm: 12px;
-    --space-md: 16px;
+    --space-xxs: 3.2px;
+    --space-xs: 6.4px;
+    --space-sm: 9.6px;
+    --space-md: 12.8px;
 
-    --fs-xxs: 11px;
-    --fs-xs: 12px;
-    --fs-sm: 13px;
-    --fs-md: 16px;
+    --fs-xxs: 8.8px;
+    --fs-xs: 9.6px;
+    --fs-sm: 10.4px;
+    --fs-md: 12.8px;
 
-    --radius-xxs: 4px;
-    --radius-xs: 8px;
-    --radius-md: 16px;
+    --radius-xxs: 3.2px;
+    --radius-xs: 6.4px;
+    --radius-md: 12.8px;
 
-    --border-default: 2px solid var(--night);
-    --border-active: 2px solid var(--primary);
+    --border-default: 1.6px solid var(--night);
+    --border-active: 1.6px solid var(--primary);
 
-    --icon-size: 24px;
+    --icon-size: 19.2px;
   }
 
   .header {
