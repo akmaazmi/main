@@ -483,7 +483,39 @@ body {
 
 @media (max-width: 768px) {
   :root {
-    --scale: 0.85;
+    --space-xxs: 2.6px;
+    --space-xs: 5.2px;
+    --space-sm: 7.8px;
+    --space-md: 10.4px;
+
+    --fs-xxs: 7.15px;
+    --fs-xs: 7.8px;
+    --fs-sm: 8.45px;
+    --fs-md: 10.4px;
+
+    --radius-xxs: 2.6px;
+    --radius-xs: 5.2px;
+    --radius-md: 10.4px;
+
+    --border-default: 1.3px solid var(--night);
+    --border-active: 1.3px solid var(--primary);
+
+    --icon-size: 15.6px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .month-control {
+    position: static;
+    transform: none;
+  }
+
+  .modal-content {
+    max-width: 90dvw;
+    max-height: 80dvh;
   }
 }
 
