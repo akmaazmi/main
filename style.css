@@ -32,7 +32,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  padding: calc(16px * var(--scale));
+  padding: calc(12px * var(--scale));
   background: var(--background-default);
   border-bottom: var(--border-default);
   flex-shrink: 0;
@@ -54,7 +54,7 @@ body {
   align-items: center;
   display: flex;
   gap: calc(12px * var(--scale));
-  padding: calc(16px * var(--scale));
+  padding: calc(12px * var(--scale));
   background: var(--background-default);
   border-bottom: var(--border-default);
   flex-wrap: wrap;
@@ -162,11 +162,11 @@ body {
   flex-direction: column;
   flex: 1;
   overflow: hidden;
-  margin: calc(16px * var(--scale));
-  padding: calc(16px * var(--scale));
+  margin: calc(12px * var(--scale));
+  padding: calc(12px * var(--scale));
   background: var(--background-default);
   border: var(--border-default);
-  border-radius: calc(16px * var(--scale));
+  border-radius: calc(12px * var(--scale));
 }
 
 .calendar-grid-container {
@@ -176,9 +176,9 @@ body {
 
 .calendar-grid {
   display: grid;
-  padding-right: calc(16px * var(--scale));
+  padding-right: calc(12px * var(--scale));
   grid-template-columns: repeat(7, 1fr);
-  gap: calc(16px * var(--scale));
+  gap: calc(12px * var(--scale));
 }
 
 .day-name {
@@ -291,7 +291,7 @@ body {
   max-width: 40vw;
   background: var(--background-default);
   animation: slideIn 0.3s;
-  border-radius: calc(16px * var(--scale));
+  border-radius: calc(12px * var(--scale));
 }
 
 @keyframes slideIn {
@@ -310,7 +310,7 @@ body {
   align-items: center;
   display: flex;
   justify-content: flex-start;
-  padding: calc(16px * var(--scale));
+  padding: calc(12px * var(--scale));
   border-bottom: var(--border-default);
 }
 
@@ -323,11 +323,11 @@ body {
 
 .modal-body {
   flex: 1;
-  padding: calc(16px * var(--scale));
+  padding: calc(12px * var(--scale));
 }
 
 .modal-section {
-  margin-bottom: calc(16px * var(--scale));
+  margin-bottom: calc(12px * var(--scale));
 }
 
 .modal-section:last-child {
@@ -380,7 +380,7 @@ body {
   align-items: center;
   display: flex;
   justify-content: flex-end;
-  padding: calc(16px * var(--scale));
+  padding: calc(12px * var(--scale));
   border-top: var(--border-default);
   gap: calc(12px * var(--scale));
 }
