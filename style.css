@@ -217,6 +217,7 @@ body {
   color: black;
   font-size: calc(12px * var(--scale));
   font-weight: 600;
+  width: calc(44px * var(--scale));
 }
 
 .morning {
@@ -254,6 +255,7 @@ body {
 .work-cycle-label {
   font-size: calc(11px * var(--scale));
   color: black;
+  margin-left: auto;
 }
 
 .modal {
