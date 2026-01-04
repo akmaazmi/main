@@ -21,13 +21,9 @@ body {
   overflow: hidden;
   font-family: "Google Sans", sans-serif;
   background: transparent;
-}
-
-.container {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  padding: calc(16px * var(--scale));
 }
 
 .header {
@@ -38,8 +34,8 @@ body {
   justify-content: space-between;
   padding: calc(16px * var(--scale));
   background: var(--background-default);
-  border: var(--border-default);
-  border-radius: calc(16px * var(--scale));
+  border-bottom: var(--border-default);
+  flex-shrink: 0;
 }
 
 /* version label (small text at top of header) */
@@ -58,6 +54,11 @@ body {
   align-items: center;
   display: flex;
   gap: calc(12px * var(--scale));
+  padding: calc(16px * var(--scale));
+  background: var(--background-default);
+  border-bottom: var(--border-default);
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .filter-pill {
@@ -95,24 +96,26 @@ body {
   left: 50%;
   gap: calc(8px * var(--scale));
   transform: translate(-50%);
+  background: var(--primary);
+  border-radius: calc(8px * var(--scale));
+  padding: calc(8px * var(--scale));
 }
 
 .month-control button {
   align-items: center;
   display: flex;
   justify-content: center;
-  background: var(--primary);
-  border: var(--border-active);
+  background: transparent;
+  border: none;
   cursor: pointer;
-  border-radius: calc(8px * var(--scale));
-  padding-block: calc(4px * var(--scale));
-  padding-inline: calc(4px * var(--scale));
+  padding-block: 0;
+  padding-inline: 0;
 }
 
 .icon-btn svg {
   display: block;
-  height: calc(24px * var(--scale));
-  width: calc(24px * var(--scale));
+  height: calc(23px * var(--scale));
+  width: calc(23px * var(--scale));
   fill: none;
   stroke: white;
   stroke-linecap: round;
@@ -127,12 +130,13 @@ body {
   font-size: calc(16px * var(--scale));
   font-weight: 600;
   text-align: center;
-  color: black;
+  color: white;
 }
 
 .download {
   align-items: center;
   display: flex;
+  margin-left: auto;
 }
 
 .download-btn {
@@ -146,13 +150,19 @@ body {
   cursor: pointer;
   border-radius: calc(8px * var(--scale));
 }
+.container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
 
 .calendar {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
-  margin-top: calc(16px * var(--scale));
+  flex: 1;
   overflow: hidden;
+  margin: calc(16px * var(--scale));
   padding: calc(16px * var(--scale));
   background: var(--background-default);
   border: var(--border-default);
@@ -472,16 +482,6 @@ body {
     --scale: 0.8;
   }
 
-  .header {
-    flex-direction: column;
-    gap: calc(12px * var(--scale));
-  }
-
-  .month-control {
-    position: static;
-    transform: none;
-  }
-
   .modal-content {
     max-width: 90dvw;
     max-height: 80dvh;
@@ -492,16 +492,6 @@ body {
 @media (max-width: 480px) {
   :root {
     --scale: 0.6;
-  }
-
-  .header {
-    flex-direction: column;
-    gap: calc(12px * var(--scale));
-  }
-
-  .month-control {
-    position: static;
-    transform: none;
   }
 
   .modal-content {
